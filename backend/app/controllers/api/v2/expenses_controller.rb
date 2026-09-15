@@ -2,7 +2,7 @@ module Api
   module V2
     class ExpensesController < ApplicationController
       before_action :ensure_employee
-      before_action :set_expense, only: [:show, :update, :destroy, :submit]
+      before_action :set_expense, only: [:show, :update, :destroy, :submit, :reopen]
       before_action :ensure_draft, only: [:update, :destroy, :submit]
 
       def index
@@ -51,10 +51,17 @@ module Api
       end
 
       def submit
-        submitted_expense = SubmitExpenseService.call(expense: @expense, changer: current_user)
-        render json: expense_response(submitted_expense)
-      rescue ActiveRecord::RecordInvalid => error
-        render json: { errors: error.record.errors.full_messages }, status: :unprocessable_entity
+        ExpenseTransition.new(@expense, actor: current_user).submit!
+        render json: expense_response(@expense)
+      rescue ExpenseTransition::InvalidTransition => e
+        render json: { error: e.message }, status: :unprocessable_entity
+      end
+
+      def reopen
+        ExpenseTransition.new(@expense, actor: current_user).reopen!
+        render json: expense_response(@expense)
+      rescue ExpenseTransition::InvalidTransition => e
+        render json: { error: e.message }, status: :unprocessable_entity
       end
 
       private
@@ -92,6 +99,7 @@ module Api
           title: expense.title,
           description: expense.description,
           amount: expense.amount,
+          payment_reference: expense.payment_reference,
           category_id: expense.category_id,
           category_name: expense.category.name,
           spent_date: expense.spent_date,

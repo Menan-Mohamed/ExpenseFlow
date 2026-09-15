@@ -11,6 +11,7 @@ export interface Expense {
   title: string
   description: string | null
   amount: string
+  payment_reference: string | null
   category_id: number
   category_name: string
   spent_date: string
@@ -56,7 +57,7 @@ const API_URL = 'http://localhost:3000/api/v2'
 const TOKEN_KEY = 'expenseflow_token'
 
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
-  const token = localStorage.getItem(TOKEN_KEY)
+  const token = sessionStorage.getItem(TOKEN_KEY)
   const response = await fetch(`${API_URL}${path}`, {
     ...options,
     headers: {
@@ -107,4 +108,8 @@ export function deleteExpense(id: number): Promise<void> {
 
 export function submitExpense(id: number): Promise<Expense> {
   return request<Expense>(`/expenses/${id}/submit`, { method: 'POST' })
+}
+
+export function reopenExpense(id: number): Promise<Expense> {
+  return request<Expense>(`/expenses/${id}/reopen`, { method: 'POST' })
 }

@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react'
 import { ExpenseForm } from '../components/ExpenseForm'
 import { ExpenseDetails } from '../components/ExpenseDetails'
 import { ExpenseList } from '../components/ExpenseList'
-import { createExpense, deleteExpense, getCategories, getExpenses, submitExpense, updateExpense, type Category, type Expense, type ExpenseInput, type ExpensePagination } from '../services/expenses'
+import { createExpense, deleteExpense, getCategories, getExpenses, reopenExpense, submitExpense, updateExpense, type Category, type Expense, type ExpenseInput, type ExpensePagination } from '../services/expenses'
+import { ProfileButton } from '../components/ProfileButton'
 
 export function EmployeePage({ onLogout }: { onLogout: () => void }) {
   const [expenses, setExpenses] = useState<Expense[]>([])
@@ -66,12 +67,21 @@ export function EmployeePage({ onLogout }: { onLogout: () => void }) {
     }
   }
 
+  async function handleReopenExpense(expense: Expense) {
+    try {
+      const reopenedExpense = await reopenExpense(expense.id)
+      setExpenses((current) => current.map((item) => item.id === reopenedExpense.id ? reopenedExpense : item))
+    } catch (reopenError) {
+      setError(reopenError instanceof Error ? reopenError.message : 'Unable to reopen expense.')
+    }
+  }
+
   return <main className="dashboard">
-    <nav className="dashboard-nav" aria-label="Main navigation"><div className="brand"><span className="brand-mark">+</span>expenseflow</div><button className="logout-button" type="button" onClick={onLogout}>Sign out</button></nav>
+    <nav className="dashboard-nav" aria-label="Main navigation"><div className="brand"><span className="brand-mark">+</span>expenseflow</div><div className="header-actions"><ProfileButton /><button className="logout-button" type="button" onClick={onLogout}>Sign out</button></div></nav>
     <section className="employee-content">
-      <div className="employee-intro"><p className="eyebrow">Employee workspace</p><h1>Your spending, simplified.</h1><p>Keep every purchase clear, current, and ready for review.</p></div>
+      <div className="employee-intro"><p className="eyebrow">Employee workspace</p></div>
       {error && <p className="error-message" role="alert">{error}</p>}
-      {isLoading ? <p className="empty-state">Loading your expenses...</p> : <div className="expense-layout"><ExpenseForm key={`${editingExpense?.id ?? 'new'}-${resetFormKey}`} categories={categories} expense={editingExpense} isSaving={isSaving} error={null} onSubmit={handleSubmit} onCancel={() => setEditingExpense(null)} /><div>{selectedExpense && <ExpenseDetails expense={selectedExpense} onClose={() => setSelectedExpense(null)} />}<ExpenseList expenses={expenses} onEdit={setEditingExpense} onDelete={handleDelete} onSubmit={handleSubmitExpense} onDetails={setSelectedExpense} pagination={pagination} onPageChange={setPage} /></div></div>}
+      {isLoading ? <p className="empty-state">Loading your expenses...</p> : <div className="expense-layout"><ExpenseForm key={`${editingExpense?.id ?? 'new'}-${resetFormKey}`} categories={categories} expense={editingExpense} isSaving={isSaving} error={null} onSubmit={handleSubmit} onCancel={() => setEditingExpense(null)} /><div>{selectedExpense && <ExpenseDetails expense={selectedExpense} onClose={() => setSelectedExpense(null)} />}<ExpenseList expenses={expenses} onEdit={setEditingExpense} onDelete={handleDelete} onSubmit={handleSubmitExpense} onReopen={handleReopenExpense} onDetails={setSelectedExpense} pagination={pagination} onPageChange={setPage} /></div></div>}
     </section>
   </main>
 }

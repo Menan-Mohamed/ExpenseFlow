@@ -11,6 +11,24 @@ class Expense < ApplicationRecord
   validate :spent_date_is_within_submission_window
   validate :category_is_active
 
+  
+  def auto_approvable?
+    amount <= category.auto_approve_limit
+  end
+
+  def eligible_reviewer?(reviewer)
+    return false if reviewer == user # nobody reviews their own expense
+    return true if reviewer.admin?
+
+    if user.employee?
+      reviewer.manager? && user.team&.manager_id == reviewer.id
+    elsif user.manager? || user.admin?
+      reviewer.admin?
+    else
+      false
+    end
+  end
+
   private
 
   def spent_date_is_not_in_the_future
@@ -33,4 +51,5 @@ class Expense < ApplicationRecord
 
     errors.add(:category, "must be active")
   end
+
 end

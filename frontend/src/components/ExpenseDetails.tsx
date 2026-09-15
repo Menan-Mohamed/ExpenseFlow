@@ -26,9 +26,10 @@ export function ExpenseDetails({ expense, onClose }: ExpenseDetailsProps) {
     <aside className="expense-details" aria-label="Expense details">
       <div className="details-heading"><div><p className="eyebrow">Expense details</p><h2>{expense.title}</h2></div><button className="text-button" type="button" onClick={onClose}>Close</button></div>
       <p className="details-summary">{expense.category_name} · {Number(expense.amount).toFixed(2)} · {expense.state}</p>
+      {(details?.payment_reference ?? expense.payment_reference) && <p className="payment-reference"><strong>Payment reference:</strong> {details?.payment_reference ?? expense.payment_reference}</p>}
       {error && <p className="error-message" role="alert">{error}</p>}
       {!error && !details && <p className="empty-state">Loading history...</p>}
-      {details && <div className="history-list"><h3>History</h3>{details.history.length === 0 ? <p className="empty-state">No status history yet.</p> : details.history.map((entry) => <div className="history-item" key={entry.id}><strong>{stateName(entry.prev_state)} to {stateName(entry.next_state)}</strong><span>{entry.comment ?? 'Status changed'} · {entry.changed_by ?? 'System'}</span><time dateTime={entry.created_at}>{new Date(entry.created_at).toLocaleString()}</time></div>)}</div>}
+      {details && <div className="history-list"><h3>History</h3>{details.history.length === 0 ? <p className="empty-state">No status history yet.</p> : details.history.map((entry) => <div className="history-item" key={entry.id}><strong>{stateName(entry.prev_state)} To {stateName(entry.next_state)}</strong><span>{entry.comment ?? 'Status changed'} · {entry.changed_by ?? 'System'}</span><time dateTime={entry.created_at}>{new Date(entry.created_at).toLocaleString()}</time></div>)}</div>}
     </aside>
   )
 }

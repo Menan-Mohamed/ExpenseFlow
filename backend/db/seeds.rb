@@ -24,7 +24,7 @@ manager.update!(team: team)
 
 employee = User.create!(email: "employee@expenseflow.com", password: "1234", role: :employee, team: team, active: true)
 
-travel = Category.create!(name: "Travel", auto_approve_limit: 50, active: true)
+travel = Category.create!(name: "Travel", auto_approve_limit: 3, active: true)
 
 expense1 = Expense.create!(user: employee, category: travel, amount: 30, title: "Taxi fare", spent_date: Date.today - 2.days)
 expense2 = Expense.create!(user: employee, category: travel, amount: 100, title: "Flight ticket", spent_date: Date.today - 1.day)

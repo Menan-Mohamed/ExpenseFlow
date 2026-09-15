@@ -20,7 +20,39 @@ Rails.application.routes.draw do
     namespace :v2 do
       resources :expenses, only: [:index, :show, :create, :update, :destroy]
       post "expenses/:id/submit", to: "expenses#submit"
+      post "expenses/:id/reopen", to: "expenses#reopen"
       resources :categories, only: [:index]
+
+      namespace :admin do
+        resources :users, only: [:index, :create, :update] do
+          member do
+            post :activate
+            post :deactivate
+          end
+        end
+        resources :expenses, only: [:index, :show] do
+          member do
+            post :approve
+            post :reject
+            post :reimburse
+          end
+        end
+        resources :categories, only: [:index, :create, :update]
+        resources :teams, only: [:index, :create, :update, :destroy]
+        resource :report, only: [:show], controller: :reports
+      end
+
+      namespace :manager do
+        resources :expenses, only: [:index, :show, :create, :update, :destroy]
+        post "expenses/:id/submit", to: "expenses#submit"
+        resources :team_members, only: [:index]
+        resources :reviews, only: [:index, :show] do
+          member do
+            post :approve
+            post :reject
+          end
+        end
+      end
     end
   end
 end
