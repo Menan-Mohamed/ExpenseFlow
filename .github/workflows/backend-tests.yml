@@ -65,12 +65,12 @@ jobs:
           ruby <<'RUBY'
           require "json"
 
-          coverage_file = "coverage/.resultset.json"
+          last_run_file = "coverage/.last_run.json"
           report = ["## Backend test report", "", "- Tests: `#{ENV.fetch("TEST_STATUS", "unknown")}`"]
 
-          if File.exist?(coverage_file)
-            result = JSON.parse(File.read(coverage_file)).values.first.fetch("coverage")
-            covered = result.fetch("covered_percent").round(2)
+          if File.exist?(last_run_file)
+            result = JSON.parse(File.read(last_run_file))
+            covered = result.dig("result", "line")
             report << "- Coverage: `#{covered}%`"
           else
             report << "- Coverage: unavailable"
