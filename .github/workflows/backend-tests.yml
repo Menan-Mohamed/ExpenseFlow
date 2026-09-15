@@ -1,0 +1,93 @@
+name: Backend tests
+
+on:
+  pull_request:
+    paths:
+      - "backend/**"
+      - ".github/workflows/backend-tests.yml"
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: expenseflow
+          POSTGRES_PASSWORD: expenseflow
+          POSTGRES_DB: expenseflow_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U expenseflow -d expenseflow_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 5
+
+    defaults:
+      run:
+        working-directory: backend
+
+    env:
+      RAILS_ENV: test
+      DB_HOST: localhost
+      DB_USERNAME: expenseflow
+      DB_PASSWORD: expenseflow
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: 3.3.5
+          bundler-cache: true
+          working-directory: backend
+
+      - name: Prepare test database
+        run: bundle exec rails db:prepare
+
+      - name: Run RSpec
+        id: rspec
+        run: bundle exec rspec
+
+      - name: Build test and coverage report
+        if: always()
+        env:
+          TEST_STATUS: ${{ steps.rspec.outcome }}
+        run: |
+          ruby <<'RUBY'
+          require "json"
+
+          coverage_file = "coverage/.resultset.json"
+          report = ["## Backend test report", "", "- Tests: `#{ENV.fetch("TEST_STATUS", "unknown")}`"]
+
+          if File.exist?(coverage_file)
+            result = JSON.parse(File.read(coverage_file)).values.first.fetch("coverage")
+            covered = result.fetch("covered_percent").round(2)
+            report << "- Coverage: `#{covered}%`"
+          else
+            report << "- Coverage: unavailable"
+          end
+
+          File.write("coverage/pr_report.md", report.join("\n") + "\n")
+          File.open(ENV.fetch("GITHUB_STEP_SUMMARY"), "a") { |file| file.puts(report.join("\n")) }
+          RUBY
+
+      - name: Comment report on pull request
+        if: always() && github.event_name == 'pull_request'
+        continue-on-error: true
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          header: backend-test-report
+          path: backend/coverage/pr_report.md
+
+      - name: Fail when tests fail
+        if: always() && steps.rspec.outcome != 'success'
+        run: exit 1
