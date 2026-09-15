@@ -14,5 +14,11 @@ Rails.application.routes.draw do
       delete "auth/logout", to: "auth#logout"
       get "me", to: "me#show"
     end
+
+    namespace :v2 do
+      resources :expenses, only: [:index, :show, :create, :update, :destroy]
+      post "expenses/:id/submit", to: "expenses#submit"
+      resources :categories, only: [:index]
+    end
   end
 end

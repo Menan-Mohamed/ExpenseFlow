@@ -1,24 +1,58 @@
+import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
+import type { ReactNode } from 'react'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import { AdminPage } from './pages/AdminPage'
 import { EmployeePage } from './pages/EmployeePage'
 import { LoginPage } from './pages/LoginPage'
 import { ManagerPage } from './pages/ManagerPage'
+import type { UserRole } from './services/auth'
 import './App.css'
 
-function AuthenticatedApp() {
-  const { user, logout } = useAuth()
+function destinationForUser(user: { id: number; role: UserRole }) {
+  if (user.role === 'admin') return '/admin'
+  if (user.role === 'manager') return '/manager'
+  return `/home`
+}
 
-  if (!user) return <LoginPage />
-  if (user.role === 'admin') return <AdminPage onLogout={logout} />
-  if (user.role === 'manager') return <ManagerPage onLogout={logout} />
-  return <EmployeePage onLogout={logout} />
+function RequireRole({ role, children }: { role: UserRole; children: ReactNode }) {
+  const { user } = useAuth()
+
+  if (!user) return <Navigate to="/" replace />
+  if (user.role !== role) return <Navigate to={destinationForUser(user)} replace />
+
+  return children
+}
+
+function LoginRoute() {
+  const { user } = useAuth()
+
+  if (user) return <Navigate to={destinationForUser(user)} replace />
+
+  return <LoginPage />
 }
 
 function App() {
   return (
-    <AuthProvider>
-      <AuthenticatedApp />
-    </AuthProvider>
+    <BrowserRouter>
+      <AuthProvider>
+        <AppRoutes />
+      </AuthProvider>
+    </BrowserRouter>
+  )
+}
+
+function AppRoutes() {
+  const { user, logout } = useAuth()
+  const fallback = user ? destinationForUser(user) : '/'
+
+  return (
+    <Routes>
+      <Route path="/" element={<LoginRoute />} />
+      <Route path="/home" element={<RequireRole role="employee"><EmployeePage onLogout={logout} /></RequireRole>} />
+      <Route path="/manager" element={<RequireRole role="manager"><ManagerPage onLogout={logout} /></RequireRole>} />
+      <Route path="/admin" element={<RequireRole role="admin"><AdminPage onLogout={logout} /></RequireRole>} />
+      <Route path="*" element={<Navigate to={fallback} replace />} />
+    </Routes>
   )
 }
 

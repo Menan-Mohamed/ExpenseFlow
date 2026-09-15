@@ -26,3 +26,10 @@ employee = User.create!(email: "employee@expenseflow.com", password: "1234", rol
 
 travel = Category.create!(name: "Travel", auto_approve_limit: 50, active: true)
 
+expense1 = Expense.create!(user: employee, category: travel, amount: 30, title: "Taxi fare", spent_date: Date.today - 2.days)
+expense2 = Expense.create!(user: employee, category: travel, amount: 100, title: "Flight ticket", spent_date: Date.today - 1.day)
+expense3 = Expense.create!(user: employee, category: travel, amount: 20, title: "Lunch with client", spent_date: Date.today - 1.day)
+expense4 = Expense.create!(user: employee, category: travel, amount: 200, title: "Hotel stay", spent_date: Date.today - 1.day)
+expense5 = Expense.create!(user: employee, category: travel, amount: 10, title: "Parking fee", spent_date: Date.today - 1.day)
+expense6 = Expense.create!(user: employee, category: travel, amount: 60, title: "Train ticket", spent_date: Date.today - 1.day)
+expense7 = Expense.create!(user: employee, category: travel, amount: 15, title: "Coffee with client", spent_date: Date.today - 1.day)
