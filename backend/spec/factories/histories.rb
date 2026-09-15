@@ -1,9 +1,9 @@
 FactoryBot.define do
   factory :history do
-    expense { nil }
+    association :expense
     changer { nil }
-    prev_state { 1 }
-    next_state { 1 }
-    comment { "MyText" }
+    prev_state { :draft }
+    next_state { :submitted }
+    comment { "Expense submitted" }
   end
 end

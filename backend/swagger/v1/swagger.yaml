@@ -1,0 +1,407 @@
+---
+openapi: 3.0.1
+info:
+  title: API V1
+  version: v1
+paths:
+  "/api/v1/auth/login":
+    post:
+      summary: Sign in
+      tags:
+      - Authentication
+      parameters: []
+      responses:
+        '200':
+          description: authenticated
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/LoginResponse"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - email
+              - password
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                  format: password
+        required: true
+  "/api/v1/auth/logout":
+    delete:
+      summary: Sign out
+      tags:
+      - Authentication
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: Authorization
+        in: header
+        required: true
+        schema:
+          type: string
+      responses:
+        '204':
+          description: token revoked
+  "/api/v1/me":
+    get:
+      summary: Get the current user
+      tags:
+      - Authentication
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: Authorization
+        in: header
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: current user
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/User"
+  "/api/v2/categories":
+    get:
+      summary: List active categories
+      tags:
+      - Categories
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: Authorization
+        in: header
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: categories returned
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  "$ref": "#/components/schemas/Category"
+  "/api/v2/expenses":
+    get:
+      summary: List expenses
+      tags:
+      - Expenses
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: Authorization
+        in: header
+        required: true
+        schema:
+          type: string
+      - name: page
+        in: query
+        required: false
+        minimum: 1
+        schema:
+          type: integer
+      - name: per_page
+        in: query
+        required: false
+        minimum: 1
+        maximum: 50
+        schema:
+          type: integer
+      responses:
+        '200':
+          description: expenses returned
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ExpenseIndexResponse"
+    post:
+      summary: Create a draft expense
+      tags:
+      - Expenses
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: Authorization
+        in: header
+        required: true
+        schema:
+          type: string
+      responses:
+        '201':
+          description: expense created
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Expense"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/ExpenseRequest"
+        required: true
+  "/api/v2/expenses/{id}":
+    parameters:
+    - name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+    get:
+      summary: Get an expense and its history
+      tags:
+      - Expenses
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: Authorization
+        in: header
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: expense returned
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ExpenseDetail"
+    patch:
+      summary: Update a draft expense
+      tags:
+      - Expenses
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: Authorization
+        in: header
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: expense updated
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Expense"
+        '422':
+          description: validation failed
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorList"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/ExpenseRequest"
+        required: true
+  "/api/v2/expenses/{id}/submit":
+    post:
+      summary: Submit a draft expense
+      tags:
+      - Expenses
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: Authorization
+        in: header
+        required: true
+        schema:
+          type: string
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+      responses:
+        '200':
+          description: expense submitted
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Expense"
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+    ErrorList:
+      type: object
+      properties:
+        errors:
+          type: array
+          items:
+            type: string
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+        email:
+          type: string
+          format: email
+        role:
+          type: string
+          enum:
+          - employee
+          - manager
+          - admin
+        team_id:
+          type: integer
+          nullable: true
+    LoginResponse:
+      type: object
+      properties:
+        token:
+          type: string
+        user:
+          "$ref": "#/components/schemas/User"
+    Category:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        auto_approve_limit:
+          type: number
+          format: double
+    ExpenseRequest:
+      type: object
+      required:
+      - expense
+      properties:
+        expense:
+          type: object
+          required:
+          - title
+          - amount
+          - category_id
+          - spent_date
+          properties:
+            title:
+              type: string
+            description:
+              type: string
+              nullable: true
+            amount:
+              type: number
+              format: double
+              exclusiveMinimum: 0
+              maximum: 100000
+            category_id:
+              type: integer
+            spent_date:
+              type: string
+              format: date
+    Expense:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        description:
+          type: string
+          nullable: true
+        amount:
+          type: number
+          format: double
+        category_id:
+          type: integer
+        category_name:
+          type: string
+        spent_date:
+          type: string
+          format: date
+        state:
+          type: string
+          enum:
+          - draft
+          - submitted
+          - approved
+          - rejected
+          - reimbursed
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    History:
+      type: object
+      properties:
+        id:
+          type: integer
+        prev_state:
+          type: integer
+          enum:
+          - 0
+          - 1
+          - 2
+          - 3
+          - 4
+        next_state:
+          type: integer
+          enum:
+          - 0
+          - 1
+          - 2
+          - 3
+          - 4
+        comment:
+          type: string
+          nullable: true
+        changed_by:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+    ExpenseDetail:
+      allOf:
+      - "$ref": "#/components/schemas/Expense"
+      - type: object
+        properties:
+          history:
+            type: array
+            items:
+              "$ref": "#/components/schemas/History"
+    ExpenseIndexResponse:
+      type: object
+      properties:
+        expenses:
+          type: array
+          items:
+            "$ref": "#/components/schemas/Expense"
+        pagination:
+          type: object
+          properties:
+            page:
+              type: integer
+            per_page:
+              type: integer
+            total_count:
+              type: integer
+            total_pages:
+              type: integer
+servers:
+- url: http://localhost:3000
