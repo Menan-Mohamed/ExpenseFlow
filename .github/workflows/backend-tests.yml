@@ -51,7 +51,8 @@ jobs:
           working-directory: backend
 
       - name: Prepare test database
-        run: bundle exec rails db:prepare
+        run: |
+          bundle exec rails db:schema:load
 
       - name: Run RSpec
         id: rspec
