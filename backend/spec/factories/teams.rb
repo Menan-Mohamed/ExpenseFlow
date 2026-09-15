@@ -1,5 +1,6 @@
 FactoryBot.define do
   factory :team do
-    name { "MyString" }
+    sequence(:name) { |number| "Team #{number}" }
+    association :manager, factory: :user
   end
 end

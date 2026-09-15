@@ -1,7 +1,7 @@
 FactoryBot.define do
   factory :category do
-    name { "MyString" }
-    auto_approve_limit { "9.99" }
-    active { false }
+    sequence(:name) { |n| "Category #{n}" }
+    auto_approve_limit { 50 }
+    active { true }
   end
 end

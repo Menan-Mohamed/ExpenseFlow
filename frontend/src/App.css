@@ -38,4 +38,42 @@ button { cursor: pointer; }
 .dashboard-content h1 { margin: 0 0 16px; font-family: Georgia, serif; font-size: clamp(44px, 6vw, 76px); font-weight: 400; letter-spacing: -3px; line-height: 1; }
 .dashboard-content > p { color: var(--muted); font-size: 18px; }
 .role-badge { display: inline-block; margin-top: 36px; padding: 8px 12px; border-radius: 999px; color: var(--accent-dark); background: var(--accent-soft); font-size: 13px; font-weight: 700; text-transform: capitalize; }
+.employee-content { padding: clamp(42px, 7vw, 78px) 0; }
+.employee-intro { max-width: 760px; margin-bottom: 42px; }
+.employee-intro h1 { margin: 0 0 16px; font-family: Georgia, serif; font-size: clamp(42px, 5vw, 68px); font-weight: 400; letter-spacing: -2px; line-height: 1; }
+.employee-intro > p:last-child { margin: 0; color: var(--muted); font-size: 18px; }
+.expense-layout { display: grid; grid-template-columns: minmax(280px, 360px) minmax(0, 1fr); gap: 56px; align-items: start; }
+.expense-form, .expense-list { padding: 28px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
+.form-heading, .section-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 26px; }
+.form-heading h2, .section-heading h2 { margin: 0; font-family: Georgia, serif; font-size: 30px; font-weight: 400; letter-spacing: -1px; }
+.field textarea, .field select { width: 100%; padding: 13px 14px; border: 1px solid var(--line); border-radius: 8px; outline: none; color: var(--ink); background: #fbfcfa; resize: vertical; }
+.field textarea:focus, .field select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(40,107,75,.14); }
+.field small { color: var(--muted); font-weight: 400; }
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.text-button, .danger-button { padding: 0; border: 0; color: var(--accent); background: transparent; font-size: 13px; font-weight: 700; }
+.danger-button { color: #a64a40; }
+.expense-count { color: var(--muted); font-size: 13px; }
+.expense-items { border-top: 1px solid var(--line); }
+.expense-item { display: flex; justify-content: space-between; gap: 18px; padding: 20px 0; border-bottom: 1px solid var(--line); }
+.expense-summary h3 { margin: 0 0 6px; font-size: 16px; }
+.expense-summary p { margin: 0; color: var(--muted); font-size: 13px; }
+.expense-summary .expense-description { margin-top: 8px; color: var(--ink); }
+.expense-meta { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; white-space: nowrap; }
+.expense-meta strong { font-size: 16px; }
+.state { padding: 5px 8px; border-radius: 999px; color: var(--accent-dark); background: var(--accent-soft); font-size: 11px; font-weight: 700; text-transform: capitalize; }
+.state-rejected { color: #a64a40; background: #fff0ee; }
+.expense-actions { display: flex; gap: 12px; }
+.empty-state { padding: 28px 0; color: var(--muted); }
+.pagination { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding-top: 18px; color: var(--muted); font-size: 13px; }
+.pagination button:disabled { cursor: not-allowed; opacity: .4; }
+.expense-details { margin-bottom: 20px; padding: 24px 28px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
+.details-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
+.details-heading h2 { margin: 0; font-family: Georgia, serif; font-size: 28px; font-weight: 400; }
+.details-summary { margin: 10px 0 24px; color: var(--muted); font-size: 14px; }
+.history-list { border-top: 1px solid var(--line); }
+.history-list h3 { margin: 18px 0 12px; font-size: 14px; }
+.history-item { display: grid; gap: 4px; padding: 13px 0; border-bottom: 1px solid var(--line); font-size: 13px; }
+.history-item span, .history-item time { color: var(--muted); }
+@media (max-width: 900px) { .expense-layout { grid-template-columns: 1fr; gap: 28px; } }
+@media (max-width: 560px) { .expense-item { align-items: flex-start; } .expense-meta { align-items: flex-end; } .form-grid { grid-template-columns: 1fr; gap: 0; } .expense-form, .expense-list { padding: 20px; } }
 @media (max-width: 760px) { .login-shell { display: block; } .login-aside { min-height: 280px; padding: 28px 24px; } .aside-copy { margin-top: 54px; } .aside-copy h1 { font-size: 42px; } .login-main { padding: 54px 24px 70px; } }

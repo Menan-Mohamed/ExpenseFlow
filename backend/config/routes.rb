@@ -1,4 +1,6 @@
 Rails.application.routes.draw do
+  mount Rswag::Ui::Engine => '/api-docs'
+  mount Rswag::Api::Engine => '/api-docs'
   # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html
 
   # Reveal health status on /up that returns 200 if the app boots with no exceptions, otherwise 500.
@@ -13,6 +15,12 @@ Rails.application.routes.draw do
       post "auth/login", to: "auth#login"
       delete "auth/logout", to: "auth#logout"
       get "me", to: "me#show"
+    end
+
+    namespace :v2 do
+      resources :expenses, only: [:index, :show, :create, :update, :destroy]
+      post "expenses/:id/submit", to: "expenses#submit"
+      resources :categories, only: [:index]
     end
   end
 end

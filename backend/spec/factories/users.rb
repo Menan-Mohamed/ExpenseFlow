@@ -1,8 +1,8 @@
 FactoryBot.define do
   factory :user do
-    email { "MyString" }
-    password_digest { "MyString" }
-    role { 1 }
-    active { false }
+    sequence(:email) { |number| "user#{number}@example.com" }
+    password { "Password123!" }
+    role { :employee }
+    active { true }
   end
 end
