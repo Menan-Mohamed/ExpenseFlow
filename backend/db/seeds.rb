@@ -7,7 +7,7 @@
 #   ["Action", "Comedy", "Drama", "Horror"].each do |genre_name|
 #     MovieGenre.find_or_create_by!(name: genre_name)
 #   end
-
+User.update_all(team_id: nil)
 History.delete_all
 Notification.delete_all
 Expense.delete_all
