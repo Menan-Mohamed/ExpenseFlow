@@ -6,7 +6,8 @@ export interface AdminUser { id: number; email: string; role: UserRole; active: 
 export interface AdminCategory { id: number; name: string; auto_approve_limit: string; active: boolean }
 export interface AdminTeam { id: number; name: string; manager_id: number | null; manager_email: string | null }
 export interface AdminExpense extends ExpenseDetails { user_id: number; user_email: string; user_role: UserRole; payment_reference: string | null }
-export interface Report { generated_at: string; summary: { total_expenses: number; total_amount: string; reimbursed_amount: string }; by_state: Record<string, number>; by_category: Record<string, string> }
+export interface ReportRow { month: string; category: string; approved_count: number; approved_amount: string; reimbursed_count: number; reimbursed_amount: string }
+export interface Report { generated_at: string; filters: { from: string; to: string; state?: string }; rows: ReportRow[]; summary: { total_expenses: number; total_amount: string } }
 
 const API_URL = 'http://localhost:3000/api/v1/admin'
 const TOKEN_KEY = 'expenseflow_token'
@@ -43,5 +44,13 @@ export const saveAdminTeam = (input: Partial<AdminTeam>) => request<AdminTeam>(i
 export const deleteAdminTeam = (id: number) => request<void>(`/teams/${id}`, { method: 'DELETE' })
 
 export const getAdminReport = (params: Record<string, string | undefined>) => request<Report>(`/report?${query(params)}`)
+export async function downloadAdminReportCsv(params: Record<string, string | undefined>): Promise<Blob> {
+  const response = await fetch(`${API_URL}/report.csv?${query(params)}`, { headers: { Accept: 'text/csv', Authorization: `Bearer ${sessionStorage.getItem(TOKEN_KEY)}` } })
+  if (!response.ok) {
+    const body = (await response.json().catch(() => ({}))) as { error?: string }
+    throw new Error(body.error ?? 'Unable to export report.')
+  }
+  return response.blob()
+}
 
 export type { ExpenseState }

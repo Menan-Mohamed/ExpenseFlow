@@ -138,6 +138,10 @@ button { cursor: pointer; }
 .report-breakdown { grid-column: span 1; }
 .report-breakdown h3 { margin: 0 0 14px; font-family: Georgia, serif; font-size: 20px; font-weight: 400; }
 .report-breakdown p { display: flex; justify-content: space-between; padding: 9px 0; margin: 0; border-top: 1px solid var(--line); font-size: 13px; }
+.report-table-wrap { overflow-x: auto; margin-top: 26px; border-top: 1px solid var(--line); }
+.report-table { width: 100%; min-width: 650px; border-collapse: collapse; }
+.report-table th, .report-table td { padding: 14px 12px; border-bottom: 1px solid var(--line); text-align: left; font-size: 13px; }
+.report-table th { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: 1px; }
 @media (max-width: 900px) { .expense-layout { grid-template-columns: 1fr; gap: 28px; } }
 @media (max-width: 560px) { .expense-item { align-items: flex-start; } .expense-meta { align-items: flex-end; } .form-grid { grid-template-columns: 1fr; gap: 0; } .expense-form, .expense-list { padding: 20px; } }
 @media (max-width: 760px) { .login-shell { display: block; } .login-aside { min-height: 280px; padding: 28px 24px; } .aside-copy { margin-top: 54px; } .aside-copy h1 { font-size: 42px; } .login-main { padding: 54px 24px 70px; } }
