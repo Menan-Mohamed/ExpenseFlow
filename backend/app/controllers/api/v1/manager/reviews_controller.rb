@@ -1,5 +1,5 @@
 module Api
-  module V2
+  module V1
     module Manager
       class ReviewsController < ManagerController
         before_action :set_review, only: [:show, :approve, :reject]
@@ -38,13 +38,14 @@ module Api
         def set_review
           @expense = Expense.joins(user: :team)
             .where(users: { team_id: managed_team.id, role: User.roles[:employee] })
+            .where.not(state: :draft)
             .find(params[:id])
         rescue ActiveRecord::RecordNotFound
           render json: { error: "Expense not found" }, status: :not_found
         end
 
         def expense_response(expense)
-          { id: expense.id, title: expense.title, description: expense.description, amount: expense.amount, payment_reference: expense.payment_reference, category_id: expense.category_id, category_name: expense.category.name, user_id: expense.user_id, user_email: expense.user.email, spent_date: expense.spent_date, state: expense.state, created_at: expense.created_at, updated_at: expense.updated_at }
+          { id: expense.id, title: expense.title, description: expense.description, amount: expense.amount, payment_reference: expense.payment_reference, category_id: expense.category_id, category_name: expense.category.name, user_id: expense.user_id, user_email: expense.user.email, spent_date: expense.spent_date, state: expense.state, approval_stage: expense.approval_stage, created_at: expense.created_at, updated_at: expense.updated_at }
         end
 
         def history_response(expense)

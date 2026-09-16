@@ -28,4 +28,24 @@ class ApplicationController < ActionController::API
     @current_jti = decoded[:jti]
     @current_exp = Time.at(decoded[:exp])
   end
+
+  def filter_expenses(scope)
+    requested_status = params[:status].presence || params[:state]
+    scope = scope.where(state: requested_status) if Expense.states.key?(requested_status)
+    scope = scope.where(category_id: params[:category].to_i) if params[:category].to_s.match?(Regexp.new("\\A\\d+\\z"))
+    scope = scope.where(spent_date: params[:from_date]..) if valid_date?(params[:from_date])
+    scope = scope.where(spent_date: ..params[:to_date]) if valid_date?(params[:to_date])
+
+    sort_column = params[:sort] == "amount" ? :amount : :spent_date
+    sort_column = :spent_date if params[:sort].blank? || params[:sort] == "date"
+    direction = params[:direction] == "asc" ? :asc : :desc
+    scope.order(sort_column => direction, created_at: :desc)
+  end
+
+  def valid_date?(value)
+    Date.iso8601(value.to_s)
+    true
+  rescue ArgumentError
+    false
+  end
 end

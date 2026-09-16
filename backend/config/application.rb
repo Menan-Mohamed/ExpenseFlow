@@ -40,5 +40,6 @@ module Backend
     # Middleware like session, flash, cookies can be added back manually.
     # Skip views, helpers and assets when generating a new resource.
     config.api_only = true
+    config.x.expense_two_level_approval_threshold = BigDecimal(ENV.fetch("EXPENSE_TWO_LEVEL_APPROVAL_THRESHOLD", "1000"))
   end
 end

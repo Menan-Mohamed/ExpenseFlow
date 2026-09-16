@@ -15,9 +15,8 @@ Rails.application.routes.draw do
       post "auth/login", to: "auth#login"
       delete "auth/logout", to: "auth#logout"
       get "me", to: "me#show"
-    end
+      resources :notifications, only: [:index]
 
-    namespace :v2 do
       resources :expenses, only: [:index, :show, :create, :update, :destroy]
       post "expenses/:id/submit", to: "expenses#submit"
       post "expenses/:id/reopen", to: "expenses#reopen"

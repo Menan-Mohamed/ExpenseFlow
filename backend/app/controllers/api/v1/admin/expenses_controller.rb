@@ -1,20 +1,17 @@
 module Api
-  module V2
+  module V1
     module Admin
       class ExpensesController < AdminController
         def index
-          expenses = Expense.includes(:user, :category)
-            .where.not(user_id: current_user.id)
-            .where.not(state: :draft)
-            .order(spent_date: :desc, created_at: :desc)
-          expenses = expenses.where(state: params[:state]) if Expense.states.key?(params[:state])
+          expenses = Expense.includes(:user, :category).where.not(state: :draft)
+          expenses = filter_expenses(expenses)
           expenses = expenses.joins(:user).where("expenses.title ILIKE ? OR users.email ILIKE ?", "%#{search}%", "%#{search}%") if params[:search].present?
           expenses, meta = pagination(expenses)
           render json: { expenses: expenses.map { |expense| expense_response(expense) }, pagination: meta }
         end
 
         def show
-          expense = Expense.includes(:user, :category, histories: :changer).find(params[:id])
+          expense = Expense.includes(:user, :category, histories: :changer).where.not(state: :draft).find(params[:id])
           render json: expense_response(expense).merge(history: expense.histories.order(created_at: :desc).map { |history| history_response(history) })
         end
 
@@ -42,8 +39,9 @@ module Api
 
         def review_expense
           expense = Expense.joins(:user)
-            .where(users: { role: [User.roles[:employee], User.roles[:manager]] })
+            .where(users: { role: User.roles.values })
             .where.not(user_id: current_user.id)
+            .where(state: :submitted)
             .find(params[:id])
           yield expense
           render json: expense_response(expense)
@@ -54,7 +52,7 @@ module Api
         end
 
         def expense_response(expense)
-          { id: expense.id, title: expense.title, description: expense.description, amount: expense.amount, category_id: expense.category_id, category_name: expense.category.name, user_id: expense.user_id, user_email: expense.user.email, user_role: expense.user.role, spent_date: expense.spent_date, state: expense.state, payment_reference: expense.payment_reference, created_at: expense.created_at, updated_at: expense.updated_at }
+          { id: expense.id, title: expense.title, description: expense.description, amount: expense.amount, category_id: expense.category_id, category_name: expense.category.name, user_id: expense.user_id, user_email: expense.user.email, user_role: expense.user.role, spent_date: expense.spent_date, state: expense.state, approval_stage: expense.approval_stage, payment_reference: expense.payment_reference, created_at: expense.created_at, updated_at: expense.updated_at }
         end
 
         def history_response(history)

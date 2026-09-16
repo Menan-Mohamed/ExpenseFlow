@@ -1,12 +1,12 @@
 module Api
-  module V2
+  module V1
     class ExpensesController < ApplicationController
       before_action :ensure_employee
       before_action :set_expense, only: [:show, :update, :destroy, :submit, :reopen]
       before_action :ensure_draft, only: [:update, :destroy, :submit]
 
       def index
-        expenses = current_user.expenses.includes(:category).order(spent_date: :desc, created_at: :desc)
+        expenses = filter_expenses(current_user.expenses.includes(:category))
         page = [params.fetch(:page, 1).to_i, 1].max
         per_page = [[params.fetch(:per_page, 5).to_i, 1].max, 50].min
         total_count = expenses.count
@@ -105,7 +105,8 @@ module Api
           spent_date: expense.spent_date,
           state: expense.state,
           created_at: expense.created_at,
-          updated_at: expense.updated_at
+          updated_at: expense.updated_at,
+          approval_stage: expense.approval_stage
         }
       end
 

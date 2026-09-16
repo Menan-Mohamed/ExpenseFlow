@@ -25,7 +25,7 @@ export function ExpenseDetails({ expense, onClose }: ExpenseDetailsProps) {
   return (
     <aside className="expense-details" aria-label="Expense details">
       <div className="details-heading"><div><p className="eyebrow">Expense details</p><h2>{expense.title}</h2></div><button className="text-button" type="button" onClick={onClose}>Close</button></div>
-      <p className="details-summary">{expense.category_name} · {Number(expense.amount).toFixed(2)} · {expense.state}</p>
+      <p className="details-summary">{expense.category_name} · {Number(expense.amount).toFixed(2)} · {expense.state}{expense.approval_stage !== 'not_applicable' && ` · ${expense.approval_stage === 'awaiting_manager' ? 'Awaiting manager approval' : 'Awaiting admin approval'}`}</p>
       {(details?.payment_reference ?? expense.payment_reference) && <p className="payment-reference"><strong>Payment reference:</strong> {details?.payment_reference ?? expense.payment_reference}</p>}
       {error && <p className="error-message" role="alert">{error}</p>}
       {!error && !details && <p className="empty-state">Loading history...</p>}

@@ -3,6 +3,7 @@ class Expense < ApplicationRecord
   belongs_to :category
   has_many :histories, dependent: :destroy
   enum state: { draft: 0, submitted: 1, approved: 2, rejected: 3, reimbursed: 4 }
+  enum approval_stage: { not_applicable: 0, awaiting_manager: 1, awaiting_admin: 2 }, _prefix: true
 
   validates :title, presence: true
   validates :amount, numericality: { greater_than: 0, less_than_or_equal_to: 100_000 }
@@ -16,11 +17,16 @@ class Expense < ApplicationRecord
     amount <= category.auto_approve_limit
   end
 
+  def requires_two_level_approval?
+    user.employee? && amount > Rails.application.config.x.expense_two_level_approval_threshold
+  end
+
   def eligible_reviewer?(reviewer)
     return false if reviewer == user # nobody reviews their own expense
-    return true if reviewer.admin?
 
     if user.employee?
+      return reviewer.admin? if approval_stage_awaiting_admin?
+
       reviewer.manager? && user.team&.manager_id == reviewer.id
     elsif user.manager? || user.admin?
       reviewer.admin?

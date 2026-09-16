@@ -1,5 +1,5 @@
 module Api
-  module V2
+  module V1
     class ManagerController < ApplicationController
       before_action :ensure_manager
 
@@ -17,7 +17,7 @@ module Api
 
       def pagination(scope)
         page = [params.fetch(:page, 1).to_i, 1].max
-        per_page = [[params.fetch(:per_page, 10).to_i, 1].max, 50].min
+        per_page = [[params.fetch(:per_page, 5).to_i, 1].max, 50].min
         total_count = scope.count
         [scope.offset((page - 1) * per_page).limit(per_page), {
           page: page,

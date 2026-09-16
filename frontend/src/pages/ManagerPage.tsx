@@ -20,6 +20,8 @@ import {
   type ManagerReviewExpense,
 } from '../services/manager'
 import { ProfileButton } from '../components/ProfileButton'
+import { NotificationButton } from '../components/NotificationButton'
+import { ExpenseFilters, type ExpenseFilterValues } from '../components/ExpenseFilters'
 
 const expenseStates = ['draft', 'submitted', 'approved', 'rejected', 'reimbursed']
 
@@ -42,13 +44,14 @@ export function ManagerPage({ onLogout }: { onLogout: () => void }) {
   const [error, setError] = useState('')
   const [saving, setSaving] = useState(false)
   const [formKey, setFormKey] = useState(0)
+  const [expenseFilters, setExpenseFilters] = useState<ExpenseFilterValues>({ status: '', category: '', from_date: '', to_date: '', sort: 'date', direction: 'desc' })
 
   function showError(reason: Error) {
     setError(reason.message)
   }
 
   function loadExpenses(page = 1) {
-    getManagerExpenses(page).then((result) => {
+    getManagerExpenses(page, expenseFilters).then((result) => {
       setExpenses(result.expenses)
       setExpensePage(result.pagination)
     }).catch(showError)
@@ -70,7 +73,7 @@ export function ManagerPage({ onLogout }: { onLogout: () => void }) {
 
   useEffect(() => {
     if (section === 'expenses') {
-      Promise.all([getCategories(), getManagerExpenses()]).then(([loadedCategories, expenseResult]) => {
+      Promise.all([getCategories(), getManagerExpenses(1, expenseFilters)]).then(([loadedCategories, expenseResult]) => {
         setCategories(loadedCategories)
         setExpenses(expenseResult.expenses)
         setExpensePage(expenseResult.pagination)
@@ -78,7 +81,7 @@ export function ManagerPage({ onLogout }: { onLogout: () => void }) {
     }
     if (section === 'members') loadMembers()
     if (section === 'reviews') loadReviews()
-  }, [section]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [section, expenseFilters]) // eslint-disable-line react-hooks/exhaustive-deps
 
   async function saveExpense(input: ExpenseInput) {
     setSaving(true)
@@ -128,7 +131,7 @@ export function ManagerPage({ onLogout }: { onLogout: () => void }) {
 
   return (
     <main className="dashboard">
-      <nav className="dashboard-nav"><div className="brand"><span className="brand-mark">+</span>expenseflow <span className="admin-label">Manager</span></div><div className="header-actions"><ProfileButton /><button className="logout-button" onClick={onLogout}>Sign out</button></div></nav>
+      <nav className="dashboard-nav"><div className="brand"><span className="brand-mark">+</span>expenseflow <span className="admin-label">Manager</span></div><div className="header-actions"><NotificationButton /><ProfileButton /><button className="logout-button" onClick={onLogout}>Sign out</button></div></nav>
       <section className="employee-content">
         <div className="employee-intro"><p className="eyebrow">Manager workspace</p></div>
         {error && <p className="error-message">{error}</p>}
@@ -138,6 +141,7 @@ export function ManagerPage({ onLogout }: { onLogout: () => void }) {
           <button className={section === 'reviews' ? 'admin-tab active' : 'admin-tab'} onClick={() => setSection('reviews')}>Review expenses</button>
         </nav>
         <div className="manager-panel">
+          {section === 'expenses' && <ExpenseFilters categories={categories} value={expenseFilters} onChange={(value) => { setExpenseFilters(value); setExpensePage((current) => ({ ...current, page: 1 })) }} />}
           {section === 'expenses' && <div className="manager-grid-single"><ExpenseForm key={`${editing?.id ?? 'new'}-${formKey}`} categories={categories} expense={editing} isSaving={saving} error={null} onSubmit={saveExpense} onCancel={() => setEditing(null)} /><ExpenseList expenses={expenses} onEdit={setEditing} onDelete={removeExpense} onSubmit={submitExpense} onDetails={(expense) => getManagerExpense(expense.id).then(setDetails).catch(showError)} pagination={expensePage} onPageChange={loadExpenses} />{details && <div className="detail-drawer"><div className="panel-title"><h3>{details.title}</h3><button className="text-button" onClick={() => setDetails(null)}>Close</button></div><p>{details.description || 'No description.'}</p><p className="muted">{details.state} · ${details.amount}</p>{details.payment_reference && <p className="payment-reference"><strong>Payment reference:</strong> {details.payment_reference}</p>}<h4>History</h4>{details.history.length === 0 ? <p className="empty-state">No status history yet.</p> : details.history.map((entry) => <div className="history-row" key={entry.id}><strong>{stateName(entry.prev_state)}</strong> To <strong>{stateName(entry.next_state)}</strong> , <span>{entry.changed_by ?? 'System'} · {new Date(entry.created_at).toLocaleString()}</span></div>)}</div>}</div>}
           {section === 'members' && <section className="manager-section"><div className="section-heading"><div><p className="eyebrow">Your team</p><h2>Team members</h2></div></div><AdminTable headers={['Email', 'Status']}>{members.map((member) => <tr key={member.id}><td>{member.email}</td><td><span className="state">{member.active ? 'Active' : 'Inactive'}</span></td></tr>)}</AdminTable><AdminPagination page={memberPage.page} totalPages={memberPage.total_pages} onChange={loadMembers} /></section>}
           {section === 'reviews' && <section className="manager-section"><div className="section-heading"><div><p className="eyebrow">Review queue</p><h2>Team expenses</h2></div></div><AdminTable headers={['Expense', 'Owner', 'Amount', 'State', 'Actions']}>{reviews.map((expense) => <tr key={expense.id}><td>{expense.title}<small>{expense.category_name}</small></td><td>{expense.user_email}</td><td>${expense.amount}</td><td><span className={`state state-${expense.state}`}>{expense.state}</span></td><td><button className="table-button" onClick={() => getManagerReview(expense.id).then(setReviewDetails).catch(showError)}>Details</button>{expense.state === 'submitted' && <><button className="table-button" onClick={() => review(expense, 'approve')}>Approve</button><button className="table-button danger-button" onClick={() => review(expense, 'reject')}>Reject</button></>}</td></tr>)}</AdminTable><AdminPagination page={reviewPage.page} totalPages={reviewPage.total_pages} onChange={loadReviews} />{reviewDetails && <div className="detail-drawer"><div className="panel-title"><h3>{reviewDetails.title}</h3><button className="text-button" onClick={() => setReviewDetails(null)}>Close</button></div><p>{reviewDetails.description || 'No description.'}</p><p className="muted">{reviewDetails.user_email} · {reviewDetails.spent_date} · ${reviewDetails.amount} · {reviewDetails.state}</p>{reviewDetails.payment_reference && <p className="payment-reference"><strong>Payment reference:</strong> {reviewDetails.payment_reference}</p>}<h4>History</h4>{reviewDetails.history.length === 0 ? <p className="empty-state">No status history yet.</p> : reviewDetails.history.map((entry) => <div className="history-row" key={entry.id}><strong>{entry.prev_state === null ? 'Unknown' : ['draft', 'submitted', 'approved', 'rejected', 'reimbursed'][entry.prev_state]}</strong> To <strong>{entry.next_state === null ? 'Unknown' : ['draft', 'submitted', 'approved', 'rejected', 'reimbursed'][entry.next_state]}</strong> , <span>{entry.changed_by ?? 'System'} · {new Date(entry.created_at).toLocaleString()}</span></div>)}</div>}</section>}

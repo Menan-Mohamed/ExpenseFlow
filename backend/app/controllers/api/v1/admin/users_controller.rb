@@ -1,5 +1,5 @@
 module Api
-  module V2
+  module V1
     module Admin
       class UsersController < AdminController
         def index

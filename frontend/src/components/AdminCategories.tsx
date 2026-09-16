@@ -3,7 +3,7 @@ import { AdminPagination, AdminTable } from './AdminTable'
 import { getAdminCategories, saveAdminCategory, type AdminCategory } from '../services/admin'
 export function AdminCategories() {
   const [items, setItems] = useState<AdminCategory[]>([]); const [page, setPage] = useState({ page: 1, total_pages: 1 }); const [editing, setEditing] = useState<AdminCategory | null>(null); const [isFormOpen, setIsFormOpen] = useState(false); const [form, setForm] = useState({ name: '', auto_approve_limit: '', active: true }); const [error, setError] = useState('')
-  function load(nextPage = 1) { getAdminCategories({ page: nextPage, per_page: 8 }).then((result) => { setItems(result.categories); setPage(result.pagination) }).catch((reason: Error) => setError(reason.message)) }
+  function load(nextPage = 1) { getAdminCategories({ page: nextPage, per_page: 5 }).then((result) => { setItems(result.categories); setPage(result.pagination) }).catch((reason: Error) => setError(reason.message)) }
   useEffect(() => { load() }, [])
   function edit(category?: AdminCategory) { setEditing(category ?? null); setIsFormOpen(true); setForm(category ? { name: category.name, auto_approve_limit: category.auto_approve_limit, active: category.active } : { name: '', auto_approve_limit: '', active: true }) }
   async function submit(event: FormEvent) { event.preventDefault(); try { await saveAdminCategory({ ...form, id: editing?.id }); setEditing(null); setIsFormOpen(false); load(page.page) } catch (reason) { setError(reason instanceof Error ? reason.message : 'Unable to save category.') } }

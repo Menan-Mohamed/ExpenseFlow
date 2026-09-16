@@ -5,6 +5,7 @@ export interface Category {
 }
 
 export type ExpenseState = 'draft' | 'submitted' | 'approved' | 'rejected' | 'reimbursed'
+export type ApprovalStage = 'not_applicable' | 'awaiting_manager' | 'awaiting_admin'
 
 export interface Expense {
   id: number
@@ -16,6 +17,7 @@ export interface Expense {
   category_name: string
   spent_date: string
   state: ExpenseState
+  approval_stage: ApprovalStage
   created_at: string
   updated_at: string
 }
@@ -53,7 +55,7 @@ export interface ExpensePage {
   pagination: ExpensePagination
 }
 
-const API_URL = 'http://localhost:3000/api/v2'
+const API_URL = 'http://localhost:3000/api/v1'
 const TOKEN_KEY = 'expenseflow_token'
 
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
@@ -76,8 +78,21 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   return (await response.json()) as T
 }
 
-export function getExpenses(page = 1, perPage = 5): Promise<ExpensePage> {
-  return request<ExpensePage>(`/expenses?page=${page}&per_page=${perPage}`)
+export interface ExpenseQuery {
+  status?: string
+  category?: string
+  from_date?: string
+  to_date?: string
+  sort?: string
+  direction?: string
+}
+
+function query(params: Record<string, string | number | undefined>) {
+  return new URLSearchParams(Object.entries(params).filter(([, value]) => value !== undefined && value !== '') as [string, string][]).toString()
+}
+
+export function getExpenses(page = 1, perPage = 5, filters: ExpenseQuery = {}): Promise<ExpensePage> {
+  return request<ExpensePage>(`/expenses?${query({ page, per_page: perPage, ...filters })}`)
 }
 
 export function getExpense(id: number): Promise<ExpenseDetails> {

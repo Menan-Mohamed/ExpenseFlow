@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_09_15_070000) do
+ActiveRecord::Schema[7.1].define(version: 2026_09_16_100000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -34,6 +34,8 @@ ActiveRecord::Schema[7.1].define(version: 2026_09_15_070000) do
     t.string "payment_reference"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.integer "approval_stage", default: 0, null: false
+    t.index ["approval_stage"], name: "index_expenses_on_approval_stage"
     t.index ["category_id"], name: "index_expenses_on_category_id"
     t.index ["user_id"], name: "index_expenses_on_user_id"
   end
@@ -61,7 +63,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_09_15_070000) do
   create_table "notifications", force: :cascade do |t|
     t.bigint "user_id", null: false
     t.string "content"
-    t.boolean "is_read"
+    t.boolean "is_read", default: false, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["user_id"], name: "index_notifications_on_user_id"

@@ -5,7 +5,7 @@ import type { UserRole } from '../services/auth'
 
 export function AdminUsers() {
   const [users, setUsers] = useState<AdminUser[]>([]); const [teams, setTeams] = useState<AdminTeam[]>([]); const [pagination, setPagination] = useState({ page: 1, total_pages: 1 }); const [search, setSearch] = useState(''); const [sort, setSort] = useState('created_at'); const [editing, setEditing] = useState<AdminUser | null>(null); const [isFormOpen, setIsFormOpen] = useState(false); const [form, setForm] = useState({ email: '', password: '', role: 'employee' as UserRole, team_id: '' }); const [error, setError] = useState('')
-  function load(page = 1) { getAdminUsers({ page, per_page: 8, search, sort }).then((result) => { setUsers(result.users); setPagination(result.pagination) }).catch((reason: Error) => setError(reason.message)) }
+  function load(page = 1) { getAdminUsers({ page, per_page: 5, search, sort }).then((result) => { setUsers(result.users); setPagination(result.pagination) }).catch((reason: Error) => setError(reason.message)) }
   useEffect(() => { load() }, [search, sort]) // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => { getAdminTeams(1).then((result) => setTeams(result.teams)).catch((reason: Error) => setError(reason.message)) }, [])
   function edit(user?: AdminUser) { setEditing(user ?? null); setIsFormOpen(true); setForm(user ? { email: user.email, password: '', role: user.role, team_id: user.team_id?.toString() ?? '' } : { email: '', password: '', role: 'employee', team_id: '' }) }

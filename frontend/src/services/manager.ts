@@ -1,4 +1,4 @@
-import type { Expense, ExpenseDetails, ExpenseInput, ExpensePagination } from './expenses'
+import type { Expense, ExpenseDetails, ExpenseInput, ExpensePagination, ExpenseQuery } from './expenses'
 
 export interface ManagerMember { id: number; email: string; role: string; active: boolean; team_id: number | null }
 export interface ManagerReviewExpense extends Expense { user_id: number; user_email: string }
@@ -6,7 +6,7 @@ export interface ManagerReviewDetails extends ManagerReviewExpense { history: Ex
 export interface ManagerMemberPage { users: ManagerMember[]; pagination: ExpensePagination }
 export interface ManagerReviewPage { expenses: ManagerReviewExpense[]; pagination: ExpensePagination }
 
-const API_URL = 'http://localhost:3000/api/v2/manager'
+const API_URL = 'http://localhost:3000/api/v1/manager'
 const TOKEN_KEY = 'expenseflow_token'
 
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
@@ -19,7 +19,11 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   return response.json() as Promise<T>
 }
 
-export const getManagerExpenses = (page = 1) => request<{ expenses: Expense[]; pagination: ExpensePagination }>(`/expenses?page=${page}&per_page=5`)
+function query(params: Record<string, string | number | undefined>) {
+  return new URLSearchParams(Object.entries(params).filter(([, value]) => value !== undefined && value !== '') as [string, string][]).toString()
+}
+
+export const getManagerExpenses = (page = 1, filters: ExpenseQuery = {}) => request<{ expenses: Expense[]; pagination: ExpensePagination }>(`/expenses?${query({ page, per_page: 5, ...filters })}`)
 export const getManagerExpense = (id: number) => request<ExpenseDetails>(`/expenses/${id}`)
 export const createManagerExpense = (input: ExpenseInput) => request<Expense>('/expenses', { method: 'POST', body: JSON.stringify({ expense: input }) })
 export const updateManagerExpense = (id: number, input: ExpenseInput) => request<Expense>(`/expenses/${id}`, { method: 'PATCH', body: JSON.stringify({ expense: input }) })

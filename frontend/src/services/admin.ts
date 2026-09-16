@@ -8,7 +8,7 @@ export interface AdminTeam { id: number; name: string; manager_id: number | null
 export interface AdminExpense extends ExpenseDetails { user_id: number; user_email: string; user_role: UserRole; payment_reference: string | null }
 export interface Report { generated_at: string; summary: { total_expenses: number; total_amount: string; reimbursed_amount: string }; by_state: Record<string, number>; by_category: Record<string, string> }
 
-const API_URL = 'http://localhost:3000/api/v2/admin'
+const API_URL = 'http://localhost:3000/api/v1/admin'
 const TOKEN_KEY = 'expenseflow_token'
 
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {

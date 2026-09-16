@@ -68,7 +68,7 @@ RSpec.describe "ExpenseFlow API", type: :request do
     end
   end
 
-  path "/api/v2/categories" do
+  path "/api/v1/categories" do
     get "List active categories" do
       tags "Categories"
       produces "application/json"
@@ -86,7 +86,7 @@ RSpec.describe "ExpenseFlow API", type: :request do
     end
   end
 
-  path "/api/v2/expenses" do
+  path "/api/v1/expenses" do
     get "List expenses" do
       tags "Expenses"
       produces "application/json"
@@ -134,7 +134,7 @@ RSpec.describe "ExpenseFlow API", type: :request do
     end
   end
 
-  path "/api/v2/expenses/{id}" do
+  path "/api/v1/expenses/{id}" do
     parameter name: :id, in: :path, type: :integer, required: true
 
     get "Get an expense and its history" do
@@ -196,7 +196,7 @@ RSpec.describe "ExpenseFlow API", type: :request do
     end
   end
 
-  path "/api/v2/expenses/{id}/submit" do
+  path "/api/v1/expenses/{id}/submit" do
     post "Submit a draft expense" do
       tags "Expenses"
       produces "application/json"

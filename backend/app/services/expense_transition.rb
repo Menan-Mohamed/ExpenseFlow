@@ -13,10 +13,13 @@ class ExpenseTransition
     expense.with_lock do
       if expense.auto_approvable?
         record_history(to: "approved", by: nil, comment: nil) # nil = system
-        expense.update!(state: :approved)
+        expense.update!(state: :approved, approval_stage: :not_applicable)
+      elsif expense.requires_two_level_approval?
+        record_history(to: "submitted", by: actor, comment: nil)
+        expense.update!(state: :submitted, approval_stage: :awaiting_manager)
       else
         record_history(to: "submitted", by: actor, comment: nil)
-        expense.update!(state: :submitted)
+        expense.update!(state: :submitted, approval_stage: :not_applicable)
       end
     end
 
@@ -25,11 +28,33 @@ class ExpenseTransition
   end
 
   def approve!(comment: nil)
-    authorize_review!
+    raise InvalidTransition, "must be submitted" unless expense.submitted?
+
+    if expense.approval_stage_awaiting_manager?
+      raise InvalidTransition, "requires manager approval" unless actor.manager? && expense.eligible_reviewer?(actor)
+
+      expense.with_lock do
+        record_history(to: "submitted", by: actor, comment: comment.presence || "Manager approval (stage 1 of 2)")
+        expense.update!(approval_stage: :awaiting_admin)
+      end
+
+      notify_owner("Your expense '#{expense.title}' received manager approval, awaiting admin.")
+      return expense
+    end
+
+    if expense.approval_stage_awaiting_admin?
+      raise InvalidTransition, "requires admin approval" unless actor.admin? && expense.eligible_reviewer?(actor)
+    end
+
+    if expense.user.employee? && expense.approval_stage_not_applicable?
+      raise InvalidTransition, "requires manager approval" unless actor.manager? && expense.eligible_reviewer?(actor)
+    end
+
+    raise InvalidTransition, "not an eligible reviewer" unless expense.eligible_reviewer?(actor)
 
     expense.with_lock do
       record_history(to: "approved", by: actor, comment: comment)
-      expense.update!(state: :approved)
+      expense.update!(state: :approved, approval_stage: :not_applicable)
     end
 
     notify_owner("Your expense '#{expense.title}' was approved.")
@@ -38,11 +63,21 @@ class ExpenseTransition
 
   def reject!(comment:)
     raise InvalidTransition, "comment is required" if comment.blank?
-    authorize_review!
+    raise InvalidTransition, "must be submitted" unless expense.submitted?
+
+    if expense.approval_stage_awaiting_manager?
+      raise InvalidTransition, "requires manager review" unless actor.manager? && expense.eligible_reviewer?(actor)
+    elsif expense.approval_stage_awaiting_admin?
+      raise InvalidTransition, "requires admin review" unless actor.admin? && expense.eligible_reviewer?(actor)
+    elsif expense.user.employee? && expense.approval_stage_not_applicable?
+      raise InvalidTransition, "requires manager review" unless actor.manager? && expense.eligible_reviewer?(actor)
+    elsif !expense.eligible_reviewer?(actor)
+      raise InvalidTransition, "not an eligible reviewer"
+    end
 
     expense.with_lock do
       record_history(to: "rejected", by: actor, comment: comment)
-      expense.update!(state: :rejected)
+      expense.update!(state: :rejected, approval_stage: :not_applicable)
     end
 
     notify_owner("Your expense '#{expense.title}' was rejected: #{comment}")
@@ -55,7 +90,7 @@ class ExpenseTransition
 
     expense.with_lock do
       record_history(to: "draft", by: actor, comment: nil)
-      expense.update!(state: :draft)
+      expense.update!(state: :draft, approval_stage: :not_applicable)
     end
 
     expense
@@ -78,11 +113,6 @@ class ExpenseTransition
   private
 
   attr_reader :expense, :actor
-
-  def authorize_review!
-    raise InvalidTransition, "must be submitted" unless expense.submitted?
-    raise InvalidTransition, "not an eligible reviewer" unless expense.eligible_reviewer?(actor)
-  end
 
   # Reads @expense.state BEFORE the caller updates it, so prev_state is always
   # accurate regardless of which transition is calling this.

@@ -1,12 +1,12 @@
 module Api
-  module V2
+  module V1
     module Manager
       class ExpensesController < ManagerController
         before_action :set_expense, only: [:show, :update, :destroy, :submit]
         before_action :ensure_draft, only: [:update, :destroy, :submit]
 
         def index
-          expenses = current_user.expenses.includes(:category).order(spent_date: :desc, created_at: :desc)
+          expenses = filter_expenses(current_user.expenses.includes(:category))
           expenses, meta = pagination(expenses)
           render json: { expenses: expenses.map { |expense| expense_response(expense) }, pagination: meta }
         end
@@ -64,7 +64,7 @@ module Api
         end
 
         def expense_response(expense)
-          { id: expense.id, title: expense.title, description: expense.description, amount: expense.amount, payment_reference: expense.payment_reference, category_id: expense.category_id, category_name: expense.category.name, spent_date: expense.spent_date, state: expense.state, created_at: expense.created_at, updated_at: expense.updated_at }
+          { id: expense.id, title: expense.title, description: expense.description, amount: expense.amount, payment_reference: expense.payment_reference, category_id: expense.category_id, category_name: expense.category.name, spent_date: expense.spent_date, state: expense.state, approval_stage: expense.approval_stage, created_at: expense.created_at, updated_at: expense.updated_at }
         end
 
         def history_response(expense)

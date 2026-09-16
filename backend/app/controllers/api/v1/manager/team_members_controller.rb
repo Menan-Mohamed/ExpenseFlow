@@ -1,5 +1,5 @@
 module Api
-  module V2
+  module V1
     module Manager
       class TeamMembersController < ManagerController
         def index
