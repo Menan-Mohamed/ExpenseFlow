@@ -91,7 +91,7 @@ RSpec.describe "ExpenseFlow API", type: :request do
     end
 
     it "shows history after submitting an expense" do
-      expense = create(:expense, user: employee, category: category)
+      expense = create(:expense, user: employee, category: category, amount: 100)
 
       post "/api/v1/expenses/#{expense.id}/submit", headers: auth_headers(employee)
       expect(response).to have_http_status(:ok)
