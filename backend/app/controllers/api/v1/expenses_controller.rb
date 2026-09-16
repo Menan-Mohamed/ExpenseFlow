@@ -1,12 +1,12 @@
 module Api
-  module V2
+  module V1
     class ExpensesController < ApplicationController
       before_action :ensure_employee
-      before_action :set_expense, only: [:show, :update, :destroy, :submit]
+      before_action :set_expense, only: [:show, :update, :destroy, :submit, :reopen]
       before_action :ensure_draft, only: [:update, :destroy, :submit]
 
       def index
-        expenses = current_user.expenses.includes(:category).order(spent_date: :desc, created_at: :desc)
+        expenses = filter_expenses(current_user.expenses.includes(:category))
         page = [params.fetch(:page, 1).to_i, 1].max
         per_page = [[params.fetch(:per_page, 5).to_i, 1].max, 50].min
         total_count = expenses.count
@@ -51,10 +51,17 @@ module Api
       end
 
       def submit
-        submitted_expense = SubmitExpenseService.call(expense: @expense, changer: current_user)
-        render json: expense_response(submitted_expense)
-      rescue ActiveRecord::RecordInvalid => error
-        render json: { errors: error.record.errors.full_messages }, status: :unprocessable_entity
+        ExpenseTransition.new(@expense, actor: current_user).submit!
+        render json: expense_response(@expense)
+      rescue ExpenseTransition::InvalidTransition => e
+        render json: { error: e.message }, status: :unprocessable_entity
+      end
+
+      def reopen
+        ExpenseTransition.new(@expense, actor: current_user).reopen!
+        render json: expense_response(@expense)
+      rescue ExpenseTransition::InvalidTransition => e
+        render json: { error: e.message }, status: :unprocessable_entity
       end
 
       private
@@ -92,12 +99,14 @@ module Api
           title: expense.title,
           description: expense.description,
           amount: expense.amount,
+          payment_reference: expense.payment_reference,
           category_id: expense.category_id,
           category_name: expense.category.name,
           spent_date: expense.spent_date,
           state: expense.state,
           created_at: expense.created_at,
-          updated_at: expense.updated_at
+          updated_at: expense.updated_at,
+          approval_stage: expense.approval_stage
         }
       end
 

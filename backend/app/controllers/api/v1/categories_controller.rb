@@ -1,5 +1,5 @@
 module Api
-  module V2
+  module V1
     class CategoriesController < ApplicationController
       def index
         categories = Category.where(active: true).order(:name)

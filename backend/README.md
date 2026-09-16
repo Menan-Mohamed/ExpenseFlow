@@ -10,6 +10,10 @@ bin/rails db:prepare
 The application expects PostgreSQL. Set `DB_HOST`, `DB_USERNAME`, and
 `DB_PASSWORD` when the database is not running with the local defaults.
 
+Set `EXPENSE_TWO_LEVEL_APPROVAL_THRESHOLD` to configure the amount above which
+employee expenses require manager approval followed by admin approval. It
+defaults to `1000`.
+
 ## Tests
 
 ```bash

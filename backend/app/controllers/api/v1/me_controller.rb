@@ -6,7 +6,8 @@ module Api
           id: current_user.id,
           email: current_user.email,
           role: current_user.role,
-          team_id: current_user.team_id
+          team_id: current_user.team_id,
+          team_name: current_user.team&.name
         }
       end
     end

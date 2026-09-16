@@ -13,14 +13,14 @@ const USER_KEY = 'expenseflow_user'
 const TOKEN_KEY = 'expenseflow_token'
 
 function getStoredUser(): User | null {
-  const storedUser = localStorage.getItem(USER_KEY)
+  const storedUser = sessionStorage.getItem(USER_KEY)
   if (!storedUser) return null
 
   try {
     return JSON.parse(storedUser) as User
   } catch {
-    localStorage.removeItem(USER_KEY)
-    localStorage.removeItem(TOKEN_KEY)
+    sessionStorage.removeItem(USER_KEY)
+    sessionStorage.removeItem(TOKEN_KEY)
     return null
   }
 }
@@ -38,8 +38,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     try {
       const result = await requestLogin(email, password)
-      localStorage.setItem(TOKEN_KEY, result.token)
-      localStorage.setItem(USER_KEY, JSON.stringify(result.user))
+      sessionStorage.setItem(TOKEN_KEY, result.token)
+      sessionStorage.setItem(USER_KEY, JSON.stringify(result.user))
       setUser(result.user)
     } catch (loginError) {
       setError(loginError instanceof Error ? loginError.message : 'Unable to sign in.')
@@ -50,13 +50,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   async function logout() {
-    const token = localStorage.getItem(TOKEN_KEY)
+    const token = sessionStorage.getItem(TOKEN_KEY)
 
     try {
       if (token) await requestLogout(token)
     } finally {
-      localStorage.removeItem(TOKEN_KEY)
-      localStorage.removeItem(USER_KEY)
+      sessionStorage.removeItem(TOKEN_KEY)
+      sessionStorage.removeItem(USER_KEY)
       setUser(null)
     }
   }

@@ -56,12 +56,12 @@ RSpec.describe "ExpenseFlow API", type: :request do
     end
   end
 
-  describe "GET /api/v2/categories" do
+  describe "GET /api/v1/categories" do
     it "returns active categories in name order" do
       create(:category, name: "Archived", active: false)
       create(:category, name: "Meals")
 
-      get "/api/v2/categories", headers: auth_headers(employee)
+      get "/api/v1/categories", headers: auth_headers(employee)
 
       expect(response).to have_http_status(:ok)
       expect(json_response.map { |item| item["name"] }).to eq(["Meals", "Travel"])
@@ -72,38 +72,38 @@ RSpec.describe "ExpenseFlow API", type: :request do
     it "creates, lists, updates, and deletes a draft expense" do
       payload = { expense: { title: "Flight", description: "Client visit", amount: 250, category_id: category.id, spent_date: Date.current } }
 
-      post "/api/v2/expenses", params: payload, headers: auth_headers(employee)
+      post "/api/v1/expenses", params: payload, headers: auth_headers(employee)
       expect(response).to have_http_status(:created)
       expense_id = json_response.fetch("id")
       expect(json_response).to include("title" => "Flight", "state" => "draft", "category_name" => "Travel")
 
-      get "/api/v2/expenses", params: { page: 1, per_page: 5 }, headers: auth_headers(employee)
+      get "/api/v1/expenses", params: { page: 1, per_page: 5 }, headers: auth_headers(employee)
       expect(response).to have_http_status(:ok)
       expect(json_response["expenses"].map { |item| item["id"] }).to include(expense_id)
       expect(json_response["pagination"]).to include("page" => 1, "per_page" => 5, "total_count" => 1, "total_pages" => 1)
 
-      patch "/api/v2/expenses/#{expense_id}", params: { expense: { title: "Updated flight" } }, headers: auth_headers(employee)
+      patch "/api/v1/expenses/#{expense_id}", params: { expense: { title: "Updated flight" } }, headers: auth_headers(employee)
       expect(response).to have_http_status(:ok)
       expect(json_response["title"]).to eq("Updated flight")
 
-      delete "/api/v2/expenses/#{expense_id}", headers: auth_headers(employee)
+      delete "/api/v1/expenses/#{expense_id}", headers: auth_headers(employee)
       expect(response).to have_http_status(:no_content)
     end
 
     it "shows history after submitting an expense" do
-      expense = create(:expense, user: employee, category: category)
+      expense = create(:expense, user: employee, category: category, amount: 100)
 
-      post "/api/v2/expenses/#{expense.id}/submit", headers: auth_headers(employee)
+      post "/api/v1/expenses/#{expense.id}/submit", headers: auth_headers(employee)
       expect(response).to have_http_status(:ok)
       expect(json_response).to include("state" => "submitted")
 
-      get "/api/v2/expenses/#{expense.id}", headers: auth_headers(employee)
+      get "/api/v1/expenses/#{expense.id}", headers: auth_headers(employee)
       expect(response).to have_http_status(:ok)
       expect(json_response["history"].first).to include("prev_state" => 0, "next_state" => 1, "changed_by" => employee.email)
     end
 
     it "prevents managers from managing expenses" do
-      get "/api/v2/expenses", headers: auth_headers(manager)
+      get "/api/v1/expenses", headers: auth_headers(manager)
 
       expect(response).to have_http_status(:forbidden)
       expect(json_response).to eq("error" => "Only employees can manage expenses")
@@ -112,7 +112,7 @@ RSpec.describe "ExpenseFlow API", type: :request do
     it "does not expose another employee's expense" do
       other_expense = create(:expense, category: category)
 
-      get "/api/v2/expenses/#{other_expense.id}", headers: auth_headers(employee)
+      get "/api/v1/expenses/#{other_expense.id}", headers: auth_headers(employee)
 
       expect(response).to have_http_status(:not_found)
       expect(json_response).to eq("error" => "Expense not found")

@@ -5,12 +5,15 @@ export interface User {
   email: string
   role: UserRole
   team_id: number | null
+  team_name?: string | null
 }
 
 export interface LoginResponse {
   token: string
   user: User
 }
+
+import { apiError, apiFetch } from './api'
 
 interface LoginErrorResponse {
   error?: string
@@ -34,8 +37,18 @@ export async function login(email: string, password: string): Promise<LoginRespo
 }
 
 export async function logout(token: string): Promise<void> {
-  await fetch(`${API_URL}/auth/logout`, {
+  await apiFetch('/auth/logout', {
     method: 'DELETE',
     headers: { Authorization: `Bearer ${token}` },
   })
+}
+
+export async function getMe(): Promise<User> {
+  const response = await apiFetch('/me')
+
+  if (!response.ok) {
+    throw await apiError(response, 'Unable to load your profile.')
+  }
+
+  return (await response.json()) as User
 }

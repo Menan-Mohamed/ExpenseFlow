@@ -14,6 +14,19 @@ RSpec.describe User, type: :model do
     expect(build(:user, email: "PERSON@example.com")).not_to be_valid
   end
 
+  it "requires employees to belong to a team" do
+    employee_without_team = build(:user)
+    employee_without_team.team = nil
+    expect(employee_without_team).not_to be_valid
+
+    expect(build(:user, role: :employee, team: build(:team))).to be_valid
+  end
+
+  it "allows managers and admins without a team" do
+    expect(build(:user, role: :manager, team: nil)).to be_valid
+    expect(build(:user, role: :admin, team: nil)).to be_valid
+  end
+
   it "destroys associated expenses" do
     user = create(:user)
     expense = create(:expense, user: user)
