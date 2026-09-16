@@ -4,11 +4,52 @@ import { getAdminTeams, getAdminUsers, saveAdminUser, setUserActive, type AdminT
 import type { UserRole } from '../services/auth'
 
 export function AdminUsers() {
-  const [users, setUsers] = useState<AdminUser[]>([]); const [teams, setTeams] = useState<AdminTeam[]>([]); const [pagination, setPagination] = useState({ page: 1, total_pages: 1 }); const [search, setSearch] = useState(''); const [sort, setSort] = useState('created_at'); const [editing, setEditing] = useState<AdminUser | null>(null); const [isFormOpen, setIsFormOpen] = useState(false); const [form, setForm] = useState({ email: '', password: '', role: 'employee' as UserRole, team_id: '' }); const [error, setError] = useState('')
-  function load(page = 1) { getAdminUsers({ page, per_page: 5, search, sort }).then((result) => { setUsers(result.users); setPagination(result.pagination) }).catch((reason: Error) => setError(reason.message)) }
+  const [users, setUsers] = useState<AdminUser[]>([])
+  const [teams, setTeams] = useState<AdminTeam[]>([])
+  const [pagination, setPagination] = useState({ page: 1, total_pages: 1 })
+  const [search, setSearch] = useState('')
+  const [sort, setSort] = useState('created_at')
+  const [editing, setEditing] = useState<AdminUser | null>(null)
+  const [isFormOpen, setIsFormOpen] = useState(false)
+  const [form, setForm] = useState({ email: '', password: '', role: 'employee' as UserRole, team_id: '' })
+  const [error, setError] = useState('')
+
+  function load(page = 1) {
+    getAdminUsers({ page, per_page: 5, search, sort }).then((result) => {
+      setUsers(result.users)
+      setPagination(result.pagination)
+    }).catch((reason: Error) => setError(reason.message))
+  }
+
   useEffect(() => { load() }, [search, sort]) // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => { getAdminTeams(1).then((result) => setTeams(result.teams)).catch((reason: Error) => setError(reason.message)) }, [])
-  function edit(user?: AdminUser) { setEditing(user ?? null); setIsFormOpen(true); setForm(user ? { email: user.email, password: '', role: user.role, team_id: user.team_id?.toString() ?? '' } : { email: '', password: '', role: 'employee', team_id: '' }) }
-  async function submit(event: FormEvent) { event.preventDefault(); try { await saveAdminUser({ ...form, id: editing?.id, team_id: form.team_id ? Number(form.team_id) : null }); setEditing(null); setIsFormOpen(false); load(pagination.page) } catch (reason) { setError(reason instanceof Error ? reason.message : 'Unable to save user.') } }
-  return <div><div className="panel-title"><div><p className="eyebrow">People</p><h2>Users</h2></div><button className="primary-button" onClick={() => edit()}>+ New user</button></div>{error && <p className="error-message">{error}</p>}<div className="toolbar"><input placeholder="Search email" value={search} onChange={(event) => setSearch(event.target.value)} /><select value={sort} onChange={(event) => setSort(event.target.value)}><option value="created_at">Newest</option><option value="email">Email</option><option value="role">Role</option><option value="active">Status</option></select></div><AdminTable headers={['Email', 'Role', 'Team', 'Status', 'Actions']}>{users.map((user) => <tr key={user.id}><td>{user.email}</td><td className="capitalize">{user.role}</td><td>{user.team_name ?? 'Unassigned'}</td><td><span className={user.active ? 'state' : 'state state-rejected'}>{user.active ? 'Active' : 'Inactive'}</span></td><td><button className="table-button" onClick={() => edit(user)}>Edit</button><button className="table-button" onClick={() => setUserActive(user.id, !user.active).then(() => load(pagination.page))}>{user.active ? 'Deactivate' : 'Activate'}</button></td></tr>)}</AdminTable><AdminPagination page={pagination.page} totalPages={pagination.total_pages} onChange={load}/>{isFormOpen && <form className="admin-form" onSubmit={submit}><h3>{editing ? 'Edit user' : 'Create user'}</h3><div className="form-grid"><label className="field"><span>Email</span><input type="email" required value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })}/></label><label className="field"><span>Password</span><input type="password" required={!editing} value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })}/></label><label className="field"><span>Role</span><select value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value as UserRole })}><option value="employee">Employee</option><option value="manager">Manager</option><option value="admin">Admin</option></select></label><label className="field"><span>Team</span><select required={form.role === 'employee'} value={form.team_id} onChange={(e) => setForm({ ...form, team_id: e.target.value })}><option value="">{form.role === 'employee' ? 'Select an active team' : 'No team'}</option>{teams.map((team) => <option key={team.id} value={team.id}>{team.name}</option>)}</select></label></div><button className="submit-button" type="submit">{editing ? 'Save changes' : 'Create user'}</button><button type="button" className="text-button cancel-button" onClick={() => { setEditing(null); setIsFormOpen(false) }}>Cancel</button></form>}</div>
+
+  function edit(user?: AdminUser) {
+    setEditing(user ?? null)
+    setIsFormOpen(true)
+    setForm(user ? { email: user.email, password: '', role: user.role, team_id: user.team_id?.toString() ?? '' } : { email: '', password: '', role: 'employee', team_id: '' })
+  }
+
+  async function submit(event: FormEvent) {
+    event.preventDefault()
+    try {
+      await saveAdminUser({ ...form, id: editing?.id, team_id: form.team_id ? Number(form.team_id) : null })
+      setEditing(null)
+      setIsFormOpen(false)
+      load(pagination.page)
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : 'Unable to save user.')
+    }
+  }
+
+  return <div>
+    <div className="panel-title"><div><p className="eyebrow">People</p><h2>Users</h2></div><button className="primary-button" onClick={() => edit()}>+ New user</button></div>
+    {error && <p className="error-message">{error}</p>}
+    <div className="toolbar"><input placeholder="Search email" value={search} onChange={(event) => setSearch(event.target.value)} /><select value={sort} onChange={(event) => setSort(event.target.value)}><option value="created_at">Newest</option><option value="email">Email</option><option value="role">Role</option><option value="active">Status</option></select></div>
+    <AdminTable headers={['ID', 'Email', 'Role', 'Team', 'Status', 'Actions']}>
+      {users.map((user) => <tr key={user.id}><td>{user.id}</td><td>{user.email}</td><td className="capitalize">{user.role}</td><td>{user.team_name ?? 'Unassigned'}</td><td><span className={user.active ? 'state' : 'state state-rejected'}>{user.active ? 'Active' : 'Inactive'}</span></td><td><button className="table-button" onClick={() => edit(user)}>Edit</button><button className="table-button" onClick={() => setUserActive(user.id, !user.active).then(() => load(pagination.page))}>{user.active ? 'Deactivate' : 'Activate'}</button></td></tr>)}
+    </AdminTable>
+    <AdminPagination page={pagination.page} totalPages={pagination.total_pages} onChange={load} />
+    {isFormOpen && <form className="admin-form" onSubmit={submit}><h3>{editing ? 'Edit user' : 'Create user'}</h3><div className="form-grid"><label className="field"><span>Email</span><input type="email" required value={form.email} onChange={(event) => setForm({ ...form, email: event.target.value })} /></label><label className="field"><span>Password</span><input type="password" required={!editing} value={form.password} onChange={(event) => setForm({ ...form, password: event.target.value })} /></label><label className="field"><span>Role</span><select value={form.role} onChange={(event) => setForm({ ...form, role: event.target.value as UserRole })}><option value="employee">Employee</option><option value="manager">Manager</option><option value="admin">Admin</option></select></label><label className="field"><span>Team</span><select required={form.role === 'employee'} value={form.team_id} onChange={(event) => setForm({ ...form, team_id: event.target.value })}><option value="">{form.role === 'employee' ? 'Select an active team' : 'No team'}</option>{teams.map((team) => <option key={team.id} value={team.id}>{team.name}</option>)}</select></label></div><button className="submit-button" type="submit">{editing ? 'Save changes' : 'Create user'}</button><button type="button" className="text-button cancel-button" onClick={() => { setEditing(null); setIsFormOpen(false) }}>Cancel</button></form>}
+  </div>
 }

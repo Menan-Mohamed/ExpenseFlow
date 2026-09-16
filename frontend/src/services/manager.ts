@@ -1,4 +1,5 @@
 import type { Expense, ExpenseDetails, ExpenseInput, ExpensePagination, ExpenseQuery } from './expenses'
+import { apiError, apiFetch } from './api'
 
 export interface ManagerMember { id: number; email: string; role: string; active: boolean; team_id: number | null }
 export interface ManagerReviewExpense extends Expense { user_id: number; user_email: string }
@@ -6,14 +7,10 @@ export interface ManagerReviewDetails extends ManagerReviewExpense { history: Ex
 export interface ManagerMemberPage { users: ManagerMember[]; pagination: ExpensePagination }
 export interface ManagerReviewPage { expenses: ManagerReviewExpense[]; pagination: ExpensePagination }
 
-const API_URL = 'http://localhost:3000/api/v1/manager'
-const TOKEN_KEY = 'expenseflow_token'
-
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
-  const response = await fetch(`${API_URL}${path}`, { ...options, headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${sessionStorage.getItem(TOKEN_KEY)}`, ...options.headers } })
+  const response = await apiFetch(`/manager${path}`, options)
   if (!response.ok) {
-    const body = (await response.json().catch(() => ({}))) as { error?: string; errors?: string[] }
-    throw new Error(body.errors?.join(', ') ?? body.error ?? 'Unable to complete the request.')
+    throw await apiError(response, 'Unable to complete the request.')
   }
   if (response.status === 204) return undefined as T
   return response.json() as Promise<T>

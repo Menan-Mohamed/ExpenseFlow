@@ -9,11 +9,16 @@ module Api
 
         def create
           team = Team.new(team_params)
-          if team.save
-            render json: team_response(team), status: :created
-          else
-            render_validation_errors(team)
+
+          Team.transaction do
+           team.save!
+            manager = User.find(team.manager_id)
+            manager.update!(team: team)
           end
+
+          render json: team_response(team), status: :created
+        rescue ActiveRecord::RecordInvalid => error
+          render_validation_errors(error.record)
         end
 
         def update

@@ -1,3 +1,5 @@
+import { apiError, apiFetch } from './api'
+
 export interface Category {
   id: number
   name: string
@@ -55,23 +57,11 @@ export interface ExpensePage {
   pagination: ExpensePagination
 }
 
-const API_URL = 'http://localhost:3000/api/v1'
-const TOKEN_KEY = 'expenseflow_token'
-
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
-  const token = sessionStorage.getItem(TOKEN_KEY)
-  const response = await fetch(`${API_URL}${path}`, {
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${token}`,
-      ...options.headers,
-    },
-  })
+  const response = await apiFetch(path, options)
 
   if (!response.ok) {
-    const body = (await response.json().catch(() => ({}))) as { error?: string; errors?: string[] }
-    throw new Error(body.errors?.join(', ') ?? body.error ?? 'Unable to complete the request.')
+    throw await apiError(response, 'Unable to complete the request.')
   }
 
   if (response.status === 204) return undefined as T

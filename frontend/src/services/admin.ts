@@ -1,5 +1,6 @@
 import type { ExpenseDetails, ExpenseState } from './expenses'
 import type { UserRole } from './auth'
+import { apiError, apiFetch } from './api'
 
 export interface AdminPagination { page: number; per_page: number; total_count: number; total_pages: number }
 export interface AdminUser { id: number; email: string; role: UserRole; active: boolean; team_id: number | null; team_name: string | null }
@@ -9,14 +10,10 @@ export interface AdminExpense extends ExpenseDetails { user_id: number; user_ema
 export interface ReportRow { month: string; category: string; approved_count: number; approved_amount: string; reimbursed_count: number; reimbursed_amount: string }
 export interface Report { generated_at: string; filters: { from: string; to: string; state?: string }; rows: ReportRow[]; summary: { total_expenses: number; total_amount: string } }
 
-const API_URL = 'http://localhost:3000/api/v1/admin'
-const TOKEN_KEY = 'expenseflow_token'
-
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
-  const response = await fetch(`${API_URL}${path}`, { ...options, headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${sessionStorage.getItem(TOKEN_KEY)}`, ...options.headers } })
+  const response = await apiFetch(`/admin${path}`, options)
   if (!response.ok) {
-    const body = (await response.json().catch(() => ({}))) as { error?: string; errors?: string[] }
-    throw new Error(body.errors?.join(', ') ?? body.error ?? 'Unable to complete the request.')
+    throw await apiError(response, 'Unable to complete the request.')
   }
   if (response.status === 204) return undefined as T
   return response.json() as Promise<T>
@@ -45,10 +42,9 @@ export const deleteAdminTeam = (id: number) => request<void>(`/teams/${id}`, { m
 
 export const getAdminReport = (params: Record<string, string | undefined>) => request<Report>(`/report?${query(params)}`)
 export async function downloadAdminReportCsv(params: Record<string, string | undefined>): Promise<Blob> {
-  const response = await fetch(`${API_URL}/report.csv?${query(params)}`, { headers: { Accept: 'text/csv', Authorization: `Bearer ${sessionStorage.getItem(TOKEN_KEY)}` } })
+  const response = await apiFetch(`/admin/report.csv?${query(params)}`, { headers: { Accept: 'text/csv' } })
   if (!response.ok) {
-    const body = (await response.json().catch(() => ({}))) as { error?: string }
-    throw new Error(body.error ?? 'Unable to export report.')
+    throw await apiError(response, 'Unable to export report.')
   }
   return response.blob()
 }
