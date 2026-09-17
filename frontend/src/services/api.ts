@@ -30,7 +30,7 @@ export async function apiFetch(path: string, options: RequestInit = {}): Promise
         setTimeout(() => {
             sessionStorage.clear()
             window.location.assign('/')
-        }, 3000)
+        }, 2000)
     }
 
     return response

@@ -100,6 +100,7 @@ class ExpenseTransition
     raise InvalidTransition, "payment reference required" if payment_reference.blank?
     raise InvalidTransition, "must be approved" unless expense.approved?
     raise InvalidTransition, "only admins can reimburse" unless actor.admin?
+    raise InvalidTransition, "Can't reimburse it's own expense" if actor == expense.user
 
     expense.with_lock do
       record_history(to: "reimbursed", by: actor, comment: nil)
