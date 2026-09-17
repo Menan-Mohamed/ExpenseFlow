@@ -21,10 +21,12 @@ admin2 = User.create!(email: "admin2@expenseflow.com", password: "1234", role: :
 manager = User.create!(email: "manager@expenseflow.com", password: "1234", role: :manager, active: true)
 team = Team.create!(name: "Engineering", manager: manager)
 employee = User.create!(email: "employee@expenseflow.com", password: "1234", role: :employee, team: team, active: true)
+manager.update!(team: team) 
 
 manager2 = User.create!(email: "manager2@expenseflow.com", password: "1234", role: :manager, active: true)
 team2 = Team.create!(name: "Sales", manager: manager2)
 employee2 = User.create!(email: "employee2@expenseflow.com", password: "1234", role: :employee, team: team2, active: true)
+manager2.update!(team: team2)
 
 # A deactivated user, to demo "deactivated user cannot sign in / loses access"
 deactivated_employee = User.create!(email: "deactivated@expenseflow.com", password: "1234", role: :employee, team: team, active: false)

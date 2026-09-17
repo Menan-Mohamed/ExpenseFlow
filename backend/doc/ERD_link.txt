@@ -1,0 +1,3 @@
+ERD link :
+
+https://dbdiagram.io/d/ExpenseFlow-6aa8420136f9982564904dcf
