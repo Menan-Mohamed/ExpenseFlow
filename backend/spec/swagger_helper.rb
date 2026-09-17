@@ -4,17 +4,8 @@ require 'rails_helper'
 require 'rswag/specs'
 
 RSpec.configure do |config|
-  # Specify a root folder where Swagger JSON files are generated
-  # NOTE: If you're using the rswag-api to serve API descriptions, you'll need
-  # to ensure that it's configured to serve Swagger from the same folder
   config.openapi_root = Rails.root.join('swagger').to_s
 
-  # Define one or more Swagger documents and provide global metadata for each one
-  # When you run the 'rswag:specs:swaggerize' rake task, the complete Swagger will
-  # be generated at the provided relative path under openapi_root
-  # By default, the operations defined in spec files are added to the first
-  # document below. You can override this behavior by adding a openapi_spec tag to the
-  # the root example_group in your specs, e.g. describe '...', openapi_spec: 'v2/swagger.json'
   config.openapi_specs = {
     'v1/swagger.yaml' => {
       openapi: '3.0.1',
@@ -23,6 +14,12 @@ RSpec.configure do |config|
         version: 'v1'
       },
       paths: {},
+
+      
+      security: [
+        { bearerAuth: [] }
+      ],
+
       components: {
         securitySchemes: {
           bearerAuth: {
@@ -46,7 +43,9 @@ RSpec.configure do |config|
               id: { type: :integer },
               email: { type: :string, format: :email },
               role: { type: :string, enum: %w[employee manager admin] },
-              team_id: { type: :integer, nullable: true }
+              active: { type: :boolean },
+              team_id: { type: :integer, nullable: true },
+              team_name: { type: :string, nullable: true }
             }
           },
           LoginResponse: {
@@ -90,8 +89,13 @@ RSpec.configure do |config|
               amount: { type: :number, format: :double },
               category_id: { type: :integer },
               category_name: { type: :string },
+              payment_reference: { type: :string, nullable: true },
               spent_date: { type: :string, format: :date },
               state: { type: :string, enum: %w[draft submitted approved rejected reimbursed] },
+              approval_stage: { type: :string, nullable: true },
+              user_id: { type: :integer },
+              user_email: { type: :string, format: :email },
+              user_role: { type: :string, enum: %w[employee manager admin] },
               created_at: { type: :string, format: :'date-time' },
               updated_at: { type: :string, format: :'date-time' }
             }
@@ -132,20 +136,112 @@ RSpec.configure do |config|
                 }
               }
             }
+          }, # 👈 this closing brace was missing
+          UserRequest: {
+            type: :object,
+            required: [:user],
+            properties: {
+              user: {
+                type: :object,
+                required: %i[email role],
+                properties: {
+                  email: { type: :string, format: :email },
+                  password: { type: :string, format: :password },
+                  role: { type: :string, enum: %w[employee manager admin] },
+                  team_id: { type: :integer, nullable: true }
+                }
+              }
+            }
+          },
+          CategoryRequest: {
+            type: :object,
+            required: [:category],
+            properties: {
+              category: {
+                type: :object,
+                required: [:name],
+                properties: {
+                  name: { type: :string },
+                  auto_approve_limit: { type: :number, format: :double },
+                  active: { type: :boolean }
+                }
+              }
+            }
+          },
+          Team: {
+            type: :object,
+            properties: {
+              id: { type: :integer },
+              name: { type: :string },
+              manager_id: { type: :integer },
+              manager_email: { type: :string, format: :email, nullable: true }
+            }
+          },
+          TeamRequest: {
+            type: :object,
+            required: [:team],
+            properties: {
+              team: {
+                type: :object,
+                required: %i[name manager_id],
+                properties: { name: { type: :string }, manager_id: { type: :integer } }
+              }
+            }
+          },
+          Notification: {
+            type: :object,
+            properties: {
+              id: { type: :integer },
+              content: { type: :string },
+              created_at: { type: :string, format: :'date-time' }
+            }
+          },
+          Report: {
+            type: :object,
+            properties: {
+              generated_at: { type: :string, format: :'date-time' },
+              filters: { type: :object },
+              rows: { type: :array, items: { type: :object } },
+              summary: { type: :object }
+            }
+          },
+          Pagination: {
+            type: :object,
+            properties: {
+              page: { type: :integer },
+              per_page: { type: :integer },
+              total_count: { type: :integer },
+              total_pages: { type: :integer }
+            }
+          },
+          UserIndexResponse: {
+            type: :object,
+            properties: {
+              users: { type: :array, items: { '$ref' => '#/components/schemas/User' } },
+              pagination: { '$ref' => '#/components/schemas/Pagination' }
+            }
+          },
+          CategoryIndexResponse: {
+            type: :object,
+            properties: {
+              categories: { type: :array, items: { '$ref' => '#/components/schemas/Category' } },
+              pagination: { '$ref' => '#/components/schemas/Pagination' }
+            }
+          },
+          TeamIndexResponse: {
+            type: :object,
+            properties: {
+              teams: { type: :array, items: { '$ref' => '#/components/schemas/Team' } },
+              pagination: { '$ref' => '#/components/schemas/Pagination' }
+            }
           }
         }
       },
       servers: [
-        {
-          url: 'http://localhost:3000'
-        }
+        { url: 'http://localhost:3000' }
       ]
     }
   }
 
-  # Specify the format of the output Swagger file when running 'rswag:specs:swaggerize'.
-  # The openapi_specs configuration option has the filename including format in
-  # the key, this may want to be changed to avoid putting yaml in json files.
-  # Defaults to json. Accepts ':json' and ':yaml'.
   config.openapi_format = :yaml
 end

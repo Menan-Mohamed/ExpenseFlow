@@ -3,12 +3,19 @@ openapi: 3.0.1
 info:
   title: API V1
   version: v1
+servers:
+- url: http://localhost:3000
+
+security:
+- bearerAuth: []
+
 paths:
   "/api/v1/auth/login":
     post:
       summary: Sign in
       tags:
       - Authentication
+      security: []
       parameters: []
       responses:
         '200':
@@ -33,35 +40,21 @@ paths:
                   type: string
                   format: password
         required: true
+
   "/api/v1/auth/logout":
     delete:
       summary: Sign out
       tags:
       - Authentication
-      security:
-      - bearerAuth: []
-      parameters:
-      - name: Authorization
-        in: header
-        required: true
-        schema:
-          type: string
       responses:
         '204':
           description: token revoked
+
   "/api/v1/me":
     get:
       summary: Get the current user
       tags:
       - Authentication
-      security:
-      - bearerAuth: []
-      parameters:
-      - name: Authorization
-        in: header
-        required: true
-        schema:
-          type: string
       responses:
         '200':
           description: current user
@@ -69,19 +62,12 @@ paths:
             application/json:
               schema:
                 "$ref": "#/components/schemas/User"
-  "/api/v2/categories":
+
+  "/api/v1/categories":
     get:
       summary: List active categories
       tags:
       - Categories
-      security:
-      - bearerAuth: []
-      parameters:
-      - name: Authorization
-        in: header
-        required: true
-        schema:
-          type: string
       responses:
         '200':
           description: categories returned
@@ -91,32 +77,26 @@ paths:
                 type: array
                 items:
                   "$ref": "#/components/schemas/Category"
-  "/api/v2/expenses":
+
+  "/api/v1/expenses":
     get:
       summary: List expenses
       tags:
       - Expenses
-      security:
-      - bearerAuth: []
       parameters:
-      - name: Authorization
-        in: header
-        required: true
-        schema:
-          type: string
       - name: page
         in: query
         required: false
-        minimum: 1
         schema:
           type: integer
+          minimum: 1
       - name: per_page
         in: query
         required: false
-        minimum: 1
-        maximum: 50
         schema:
           type: integer
+          minimum: 1
+          maximum: 50
       responses:
         '200':
           description: expenses returned
@@ -128,14 +108,7 @@ paths:
       summary: Create a draft expense
       tags:
       - Expenses
-      security:
-      - bearerAuth: []
-      parameters:
-      - name: Authorization
-        in: header
-        required: true
-        schema:
-          type: string
+      parameters: []
       responses:
         '201':
           description: expense created
@@ -149,7 +122,8 @@ paths:
             schema:
               "$ref": "#/components/schemas/ExpenseRequest"
         required: true
-  "/api/v2/expenses/{id}":
+
+  "/api/v1/expenses/{id}":
     parameters:
     - name: id
       in: path
@@ -160,14 +134,6 @@ paths:
       summary: Get an expense and its history
       tags:
       - Expenses
-      security:
-      - bearerAuth: []
-      parameters:
-      - name: Authorization
-        in: header
-        required: true
-        schema:
-          type: string
       responses:
         '200':
           description: expense returned
@@ -179,14 +145,7 @@ paths:
       summary: Update a draft expense
       tags:
       - Expenses
-      security:
-      - bearerAuth: []
-      parameters:
-      - name: Authorization
-        in: header
-        required: true
-        schema:
-          type: string
+      parameters: []
       responses:
         '200':
           description: expense updated
@@ -206,19 +165,20 @@ paths:
             schema:
               "$ref": "#/components/schemas/ExpenseRequest"
         required: true
-  "/api/v2/expenses/{id}/submit":
+    delete:
+      summary: Delete a draft expense
+      tags:
+      - Expenses
+      responses:
+        '204':
+          description: expense deleted
+
+  "/api/v1/expenses/{id}/submit":
     post:
       summary: Submit a draft expense
       tags:
       - Expenses
-      security:
-      - bearerAuth: []
       parameters:
-      - name: Authorization
-        in: header
-        required: true
-        schema:
-          type: string
       - name: id
         in: path
         required: true
@@ -231,18 +191,676 @@ paths:
             application/json:
               schema:
                 "$ref": "#/components/schemas/Expense"
+
+  "/api/v1/expenses/{id}/reopen":
+    post:
+      summary: Reopen a rejected expense
+      tags:
+      - Expenses
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+      responses:
+        '200':
+          description: expense reopened
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Expense"
+
+  "/api/v1/notifications":
+    get:
+      summary: List unread notifications
+      tags:
+      - Notifications
+      responses:
+        '200':
+          description: notifications returned
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  "$ref": "#/components/schemas/Notification"
+
+  "/api/v1/admin/users":
+    get:
+      summary: List users
+      tags:
+      - Admin - Users
+      parameters:
+      - name: search
+        in: query
+        schema:
+          type: string
+      - name: role
+        in: query
+        schema:
+          type: string
+          enum:
+          - employee
+          - manager
+          - admin
+      - name: sort
+        in: query
+        schema:
+          type: string
+          enum:
+          - email
+          - role
+          - active
+          - created_at
+      - name: direction
+        in: query
+        schema:
+          type: string
+          enum:
+          - asc
+          - desc
+      - name: page
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+      - name: per_page
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 50
+      responses:
+        '200':
+          description: users returned
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/UserIndexResponse"
+    post:
+      summary: Create a user
+      tags:
+      - Admin - Users
+      parameters: []
+      responses:
+        '201':
+          description: user created
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/User"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/UserRequest"
+        required: true
+
+  "/api/v1/admin/users/{id}":
+    parameters:
+    - name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+    patch:
+      summary: Update a user
+      tags:
+      - Admin - Users
+      parameters: []
+      responses:
+        '200':
+          description: user updated
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/User"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/UserRequest"
+        required: true
+
+  "/api/v1/admin/users/{id}/activate":
+    post:
+      summary: Activate a user
+      tags:
+      - Admin - Users
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+      responses:
+        '200':
+          description: user status updated
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/User"
+
+  "/api/v1/admin/users/{id}/deactivate":
+    post:
+      summary: Deactivate a user
+      tags:
+      - Admin - Users
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+      responses:
+        '200':
+          description: user status updated
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/User"
+
+  "/api/v1/admin/expenses":
+    get:
+      summary: List non-draft expenses
+      tags:
+      - Admin - Expenses
+      parameters:
+      - name: search
+        in: query
+        schema:
+          type: string
+      - name: state
+        in: query
+        schema:
+          type: string
+          enum:
+          - submitted
+          - approved
+          - rejected
+          - reimbursed
+      - name: category
+        in: query
+        schema:
+          type: integer
+      - name: from_date
+        in: query
+        schema:
+          type: string
+          format: date
+      - name: to_date
+        in: query
+        schema:
+          type: string
+          format: date
+      - name: page
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+      - name: per_page
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 50
+      responses:
+        '200':
+          description: expenses returned
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ExpenseIndexResponse"
+
+  "/api/v1/admin/expenses/{id}":
+    parameters:
+    - name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+    get:
+      summary: Get an admin expense
+      tags:
+      - Admin - Expenses
+      responses:
+        '200':
+          description: expense returned
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ExpenseDetail"
+
+  "/api/v1/admin/expenses/{id}/approve":
+    post:
+      summary: Approve an expense
+      tags:
+      - Admin - Expenses
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+      responses:
+        '200':
+          description: expense action completed
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Expense"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                comment:
+                  type: string
+                payment_reference:
+                  type: string
+
+  "/api/v1/admin/expenses/{id}/reject":
+    post:
+      summary: Reject an expense
+      tags:
+      - Admin - Expenses
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+      responses:
+        '200':
+          description: expense action completed
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Expense"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                comment:
+                  type: string
+                payment_reference:
+                  type: string
+
+  "/api/v1/admin/expenses/{id}/reimburse":
+    post:
+      summary: Reimburse an expense
+      tags:
+      - Admin - Expenses
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+      responses:
+        '200':
+          description: expense action completed
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Expense"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                comment:
+                  type: string
+                payment_reference:
+                  type: string
+
+  "/api/v1/admin/categories":
+    get:
+      summary: List categories
+      tags:
+      - Admin - Categories
+      parameters:
+      - name: sort
+        in: query
+        schema:
+          type: string
+          enum:
+          - name
+          - auto_approve_limit
+          - active
+          - created_at
+      - name: direction
+        in: query
+        schema:
+          type: string
+          enum:
+          - asc
+          - desc
+      - name: page
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+      - name: per_page
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 50
+      responses:
+        '200':
+          description: categories returned
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/CategoryIndexResponse"
+    post:
+      summary: Create a category
+      tags:
+      - Admin - Categories
+      parameters: []
+      responses:
+        '201':
+          description: category created
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Category"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/CategoryRequest"
+        required: true
+
+  "/api/v1/admin/categories/{id}":
+    patch:
+      summary: Update a category
+      tags:
+      - Admin - Categories
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+      responses:
+        '200':
+          description: category updated
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Category"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/CategoryRequest"
+        required: true
+
+  "/api/v1/admin/teams":
+    get:
+      summary: List teams
+      tags:
+      - Admin - Teams
+      parameters:
+      - name: page
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+      - name: per_page
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 50
+      responses:
+        '200':
+          description: teams returned
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/TeamIndexResponse"
+    post:
+      summary: Create a team
+      tags:
+      - Admin - Teams
+      parameters: []
+      responses:
+        '201':
+          description: team created
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Team"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/TeamRequest"
+        required: true
+
+  "/api/v1/admin/teams/{id}":
+    parameters:
+    - name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+    patch:
+      summary: Update a team
+      tags:
+      - Admin - Teams
+      parameters: []
+      responses:
+        '200':
+          description: team updated
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Team"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/TeamRequest"
+        required: true
+    delete:
+      summary: Delete a team
+      tags:
+      - Admin - Teams
+      responses:
+        '204':
+          description: team deleted
+
+  "/api/v1/admin/report":
+    get:
+      summary: Generate an expense report
+      tags:
+      - Admin - Reports
+      parameters:
+      - name: from
+        in: query
+        required: true
+        schema:
+          type: string
+          format: date
+      - name: to
+        in: query
+        required: true
+        schema:
+          type: string
+          format: date
+      - name: state
+        in: query
+        schema:
+          type: string
+          enum:
+          - approved
+          - reimbursed
+      responses:
+        '200':
+          description: report generated
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Report"
+            text/csv:
+              schema:
+                "$ref": "#/components/schemas/Report"
+
+  "/api/v1/manager/team_members":
+    get:
+      summary: List team members
+      tags:
+      - Manager - Team Members
+      parameters:
+      - name: page
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+      - name: per_page
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 50
+      responses:
+        '200':
+          description: team members returned
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/UserIndexResponse"
+
+  "/api/v1/manager/reviews":
+    get:
+      summary: List team expense reviews
+      tags:
+      - Manager - Reviews
+      parameters:
+      - name: state
+        in: query
+        schema:
+          type: string
+          enum:
+          - submitted
+          - approved
+          - rejected
+          - reimbursed
+      - name: page
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+      - name: per_page
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 50
+      responses:
+        '200':
+          description: reviews returned
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ExpenseIndexResponse"
+
+  "/api/v1/manager/reviews/{id}":
+    parameters:
+    - name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+    get:
+      summary: Get a team expense review
+      tags:
+      - Manager - Reviews
+      responses:
+        '200':
+          description: review returned
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ExpenseDetail"
+
+  "/api/v1/manager/reviews/{id}/approve":
+    post:
+      summary: Approve a team expense
+      tags:
+      - Manager - Reviews
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+      responses:
+        '200':
+          description: review action completed
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Expense"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                comment:
+                  type: string
+
+  "/api/v1/manager/reviews/{id}/reject":
+    post:
+      summary: Reject a team expense
+      tags:
+      - Manager - Reviews
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+      responses:
+        '200':
+          description: review action completed
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Expense"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                comment:
+                  type: string
+
 components:
   securitySchemes:
     bearerAuth:
       type: http
       scheme: bearer
       bearerFormat: JWT
+
   schemas:
     Error:
       type: object
       properties:
         error:
           type: string
+
     ErrorList:
       type: object
       properties:
@@ -250,6 +868,7 @@ components:
           type: array
           items:
             type: string
+
     User:
       type: object
       properties:
@@ -264,9 +883,15 @@ components:
           - employee
           - manager
           - admin
+        active:
+          type: boolean
         team_id:
           type: integer
           nullable: true
+        team_name:
+          type: string
+          nullable: true
+
     LoginResponse:
       type: object
       properties:
@@ -274,6 +899,7 @@ components:
           type: string
         user:
           "$ref": "#/components/schemas/User"
+
     Category:
       type: object
       properties:
@@ -284,6 +910,7 @@ components:
         auto_approve_limit:
           type: number
           format: double
+
     ExpenseRequest:
       type: object
       required:
@@ -312,6 +939,7 @@ components:
             spent_date:
               type: string
               format: date
+
     Expense:
       type: object
       properties:
@@ -329,6 +957,9 @@ components:
           type: integer
         category_name:
           type: string
+        payment_reference:
+          type: string
+          nullable: true
         spent_date:
           type: string
           format: date
@@ -340,12 +971,27 @@ components:
           - approved
           - rejected
           - reimbursed
+        approval_stage:
+          type: string
+          nullable: true
+        user_id:
+          type: integer
+        user_email:
+          type: string
+          format: email
+        user_role:
+          type: string
+          enum:
+          - employee
+          - manager
+          - admin
         created_at:
           type: string
           format: date-time
         updated_at:
           type: string
           format: date-time
+
     History:
       type: object
       properties:
@@ -353,20 +999,10 @@ components:
           type: integer
         prev_state:
           type: integer
-          enum:
-          - 0
-          - 1
-          - 2
-          - 3
-          - 4
+          enum: [0, 1, 2, 3, 4]
         next_state:
           type: integer
-          enum:
-          - 0
-          - 1
-          - 2
-          - 3
-          - 4
+          enum: [0, 1, 2, 3, 4]
         comment:
           type: string
           nullable: true
@@ -376,6 +1012,7 @@ components:
         created_at:
           type: string
           format: date-time
+
     ExpenseDetail:
       allOf:
       - "$ref": "#/components/schemas/Expense"
@@ -385,6 +1022,19 @@ components:
             type: array
             items:
               "$ref": "#/components/schemas/History"
+
+    Pagination:
+      type: object
+      properties:
+        page:
+          type: integer
+        per_page:
+          type: integer
+        total_count:
+          type: integer
+        total_pages:
+          type: integer
+
     ExpenseIndexResponse:
       type: object
       properties:
@@ -393,15 +1043,135 @@ components:
           items:
             "$ref": "#/components/schemas/Expense"
         pagination:
+          "$ref": "#/components/schemas/Pagination"
+
+    UserRequest:
+      type: object
+      required:
+      - user
+      properties:
+        user:
           type: object
+          required:
+          - email
+          - role
           properties:
-            page:
+            email:
+              type: string
+              format: email
+            password:
+              type: string
+              format: password
+            role:
+              type: string
+              enum:
+              - employee
+              - manager
+              - admin
+            team_id:
               type: integer
-            per_page:
+              nullable: true
+
+    CategoryRequest:
+      type: object
+      required:
+      - category
+      properties:
+        category:
+          type: object
+          required:
+          - name
+          properties:
+            name:
+              type: string
+            auto_approve_limit:
+              type: number
+              format: double
+            active:
+              type: boolean
+
+    Team:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        manager_id:
+          type: integer
+        manager_email:
+          type: string
+          format: email
+          nullable: true
+
+    TeamRequest:
+      type: object
+      required:
+      - team
+      properties:
+        team:
+          type: object
+          required:
+          - name
+          - manager_id
+          properties:
+            name:
+              type: string
+            manager_id:
               type: integer
-            total_count:
-              type: integer
-            total_pages:
-              type: integer
-servers:
-- url: http://localhost:3000
+
+    Notification:
+      type: object
+      properties:
+        id:
+          type: integer
+        content:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+
+    Report:
+      type: object
+      properties:
+        generated_at:
+          type: string
+          format: date-time
+        filters:
+          type: object
+        rows:
+          type: array
+          items:
+            type: object
+        summary:
+          type: object
+
+    UserIndexResponse:
+      type: object
+      properties:
+        users:
+          type: array
+          items:
+            "$ref": "#/components/schemas/User"
+        pagination:
+          "$ref": "#/components/schemas/Pagination"
+
+    CategoryIndexResponse:
+      type: object
+      properties:
+        categories:
+          type: array
+          items:
+            "$ref": "#/components/schemas/Category"
+        pagination:
+          "$ref": "#/components/schemas/Pagination"
+
+    TeamIndexResponse:
+      type: object
+      properties:
+        teams:
+          type: array
+          items:
+            "$ref": "#/components/schemas/Team"
+        pagination:
+          "$ref": "#/components/schemas/Pagination"
