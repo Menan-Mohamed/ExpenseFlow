@@ -1,7 +1,6 @@
 module Api
   module V1
     class ExpensesController < ApplicationController
-      before_action :ensure_employee
       before_action :set_expense, only: [:show, :update, :destroy, :submit, :reopen]
       before_action :ensure_draft, only: [:update, :destroy, :submit]
 

@@ -19,6 +19,7 @@ import {
   getManagerReview,
   getManagerReviews,
   rejectManagerExpense,
+  reopenManagerExpense,
   submitManagerExpense,
   updateManagerExpense,
   type ManagerMember,
@@ -171,6 +172,19 @@ export function ManagerPage({ onLogout }: { onLogout: () => void }) {
     }
   }
 
+  async function reopenExpense(expense: Expense) {
+    try {
+      await reopenManagerExpense(expense.id);
+      loadExpenses(expensePage.page);
+    } catch (reason) {
+      showError(
+        reason instanceof Error
+          ? reason
+          : new Error("Unable to reopen expense."),
+      );
+    }
+  }
+
   async function review(
     expense: ManagerReviewExpense,
     action: "approve" | "reject",
@@ -268,6 +282,7 @@ export function ManagerPage({ onLogout }: { onLogout: () => void }) {
                 onEdit={setEditing}
                 onDelete={removeExpense}
                 onSubmit={submitExpense}
+                onReopen={reopenExpense}
                 onDetails={(expense) =>
                   getManagerExpense(expense.id)
                     .then(setDetails)

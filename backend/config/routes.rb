@@ -42,8 +42,6 @@ Rails.application.routes.draw do
       end
 
       namespace :manager do
-        resources :expenses, only: [:index, :show, :create, :update, :destroy]
-        post "expenses/:id/submit", to: "expenses#submit"
         resources :team_members, only: [:index]
         resources :reviews, only: [:index, :show] do
           member do

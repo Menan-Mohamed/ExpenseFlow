@@ -102,11 +102,14 @@ RSpec.describe "ExpenseFlow API", type: :request do
       expect(json_response["history"].first).to include("prev_state" => 0, "next_state" => 1, "changed_by" => employee.email)
     end
 
-    it "prevents managers from managing expenses" do
+    it "allows managers to manage their own expenses" do
       get "/api/v1/expenses", headers: auth_headers(manager)
 
-      expect(response).to have_http_status(:forbidden)
-      expect(json_response).to eq("error" => "Only employees can manage expenses")
+      expect(response).to have_http_status(:ok)
+      expect(json_response).to include(
+        "expenses" => [],
+        "pagination" => include("total_count" => 0)
+      )
     end
 
     it "does not expose another employee's expense" do
