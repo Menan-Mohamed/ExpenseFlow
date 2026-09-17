@@ -119,3 +119,13 @@ The seed script (`db/seeds.rb`) creates expenses covering every state (`draft`, 
 - **Team update/delete has unhandled edge cases.** Specifically: what should happen to a team's employees if the team is deleted and what should happen if an admin changes a team's `manager_id` to a different manager.
 
 - **No rate limiting on `/api/v1/auth/login`.** A brute-force login attempt isn't currently throttled. With more time, I'd add `rack-attack` to rate-limit repeated failed login attempts per IP/email.
+
+---
+
+## Demo Video Link
+
+* https://drive.google.com/file/d/1o6J7_JMd680Y-DavihF5uXORk4AsF0ry/view?usp=sharing
+
+### slides:
+* https://drive.google.com/drive/folders/1NVh9KQ9sd4FRdjr7p1Vqcw1uqd0I0F-y?usp=sharing
+
